@@ -127,7 +127,8 @@ bool applyMatcher(const std::string &rule, std::string &real_rule, const Proxy &
         {ProxyType::SOCKS5,       "SOCKS5"},
         {ProxyType::WireGuard,    "WIREGUARD"},
         {ProxyType::Hysteria,     "HYSTERIA"},
-        {ProxyType::Hysteria2,    "HYSTERIA2"}
+        {ProxyType::Hysteria2,    "HYSTERIA2"},
+        {ProxyType::TUIC,    "TUIC"}
     };
     if(startsWith(rule, "!!GROUP="))
     {
@@ -557,6 +558,38 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
             if (x.HopInterval)
                 singleproxy["hop-interval"] = x.HopInterval;
             break;
+            case ProxyType::TUIC:
+                singleproxy["type"] = "tuic";
+                if (!x.UUID.empty())
+                    singleproxy["uuid"] = x.UUID;
+                if (!x.Password.empty())
+                    singleproxy["password"] = x.Password;
+                if (!x.HeartbeatInterval.empty())
+                    singleproxy["heartbeat-interval"] = x.HeartbeatInterval;
+                if (!x.Alpn.empty())
+                    singleproxy["alpn"] = x.Alpn;
+                if (!x.FastOpen.is_undef())
+                    singleproxy["fast-open"] = x.FastOpen.get();
+                if (!x.UdpRelayMode.empty())
+                    singleproxy["udp-relay-mode"] = x.UdpRelayMode;
+                if (!x.CongestionController.empty())
+                    singleproxy["congestion-controller"] = x.CongestionController;
+                if (!x.SNI.empty())
+                    singleproxy["sni"] = x.SNI;
+                if (!x.DisableSNI.is_undef())
+                    singleproxy["disable-sni"] = x.DisableSNI.get();
+                if (!x.ReduceRTT.is_undef())
+                    singleproxy["reduce-rtt"] = x.ReduceRTT.get();
+                if (x.RequestTimeout != 0)
+                    singleproxy["request-timeout"] = x.RequestTimeout;
+                if (x.MaxUdpRelayPacketSize != 0)
+                    singleproxy["max-udp-relay-packet-size"] = x.MaxUdpRelayPacketSize;
+                if (x.MaxOpenStreams != 0)
+                    singleproxy["max-open-streams"] = x.MaxOpenStreams;
+                if (!scv.is_undef())
+                    singleproxy["skip-cert-verify"] = scv.get();
+                break;
+
         default:
             continue;
         }
@@ -947,11 +980,19 @@ std::string proxyToSurge(std::vector<Proxy> &nodes, const std::string &base_conf
             proxy = "hysteria, " + hostname + ", " + port + ", password=" + password;
             if(x.DownSpeed)
                 proxy += ", download-bandwidth=" + x.DownSpeed;
-            
             if(!scv.is_undef())
                 proxy += ",skip-cert-verify=" + std::string(scv.get() ? "true" : "false");
             if(!x.Fingerprint.empty())
                 proxy += ",server-cert-fingerprint-sha256=" + x.Fingerprint;
+            if(!x.SNI.empty())
+                proxy += ",sni=" + x.SNI;
+            break;
+        case ProxyType::TUIC:
+            if(surge_ver < 4)
+                continue;
+            proxy = "tuic-v5, " + hostname + ", " + port + ", password=" + password;
+            if(!x.UUID.empty())
+                    proxy += ",uuid=" + x.UUID;
             if(!x.SNI.empty())
                 proxy += ",sni=" + x.SNI;
             break;
@@ -2450,6 +2491,49 @@ void proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::v
                 if (!x.CaStr.empty())
                     tls.AddMember("certificate", rapidjson::StringRef(x.CaStr.c_str()), allocator);
                 proxy.AddMember("tls", tls, allocator);
+                break;
+            }
+            case ProxyType::TUIC:
+            {
+                addSingBoxCommonMembers(proxy, x, "tuic", allocator);
+
+                if (!x.UUID.empty())
+                    proxy.AddMember("uuid", rapidjson::StringRef(x.UUID.c_str()), allocator);
+
+                if (!x.Password.empty())
+                    proxy.AddMember("password", rapidjson::StringRef(x.Password.c_str()), allocator);
+
+                if (!x.HeartbeatInterval.empty())
+                    proxy.AddMember("heartbeat", rapidjson::StringRef(x.HeartbeatInterval.c_str()), allocator);
+
+                rapidjson::Value tls(rapidjson::kObjectType);
+                tls.AddMember("enabled", true, allocator);
+                if (!scv.is_undef())
+                    tls.AddMember("insecure", scv.get(), allocator);
+                if (!x.Alpn.empty())
+                {
+                    rapidjson::Value alpn(rapidjson::kArrayType);
+                    alpn.PushBack(rapidjson::StringRef(x.Alpn[0].c_str()), allocator);
+                    tls.AddMember("alpn", alpn, allocator);
+                }
+
+                if (!x.UdpRelayMode.empty())
+                    proxy.AddMember("udp_relay_mode", rapidjson::StringRef(x.UdpRelayMode.c_str()), allocator);
+
+                if (!x.CongestionController.empty())
+                    proxy.AddMember("congestion_controller", rapidjson::StringRef(x.CongestionController.c_str()), allocator);
+
+                if (!x.SNI.empty())
+                    proxy.AddMember("sni", rapidjson::StringRef(x.SNI.c_str()), allocator);
+
+                if (!scv.is_undef())
+                {
+                    rapidjson::Value tls(rapidjson::kObjectType);
+                    tls.AddMember("enabled", true, allocator);
+                    tls.AddMember("insecure", scv.get(), allocator);
+                    proxy.AddMember("tls", tls, allocator);
+                }
+
                 break;
             }
             case ProxyType::HTTP:

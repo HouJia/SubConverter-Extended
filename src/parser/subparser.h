@@ -28,6 +28,7 @@ void httpConstruct(Proxy &node, const std::string &group, const std::string &rem
 void trojanConstruct(Proxy &node, const std::string &group, const std::string &remarks, const std::string &server, const std::string &port, const std::string &password, const std::string &network, const std::string &host, const std::string &path, bool tlssecure, tribool udp = tribool(), tribool tfo = tribool(), tribool scv = tribool(), tribool tls13 = tribool(), const std::string &underlying_proxy = "");
 void snellConstruct(Proxy &node, const std::string &group, const std::string &remarks, const std::string &server, const std::string &port, const std::string &password, const std::string &obfs, const std::string &host, uint16_t version = 0, tribool udp = tribool(), tribool tfo = tribool(), tribool scv = tribool(), const std::string &underlying_proxy = "");
 
+
 void hysteriaConstruct(
     Proxy &node, 
     const std::string &group, 
@@ -52,8 +53,8 @@ void hysteriaConstruct(
     const std::string &recv_window, 
     const std::string &disable_mtu_discovery, 
     const std::string &hop_interval, 
-    const std::string &alpn, 
-    tribool tfo, 
+    const std::string &alpn,
+    tribool tfo,
     tribool scv,
     const std::string &underlying_proxy = ""
 );
@@ -82,6 +83,31 @@ void hysteria2Construct(
     const std::string &underlying_proxy = ""
 );
 
+void tuicConstruct(
+        Proxy &node,
+        const std::string &group,
+        const std::string &remarks,
+        const std::string &server,
+        const std::string &port,
+        const std::string &uuid,
+        const std::string &password,
+        const std::string &ip,
+        const std::string &heartbeat_interval,
+        const std::string &alpn,
+        const std::string &disable_sni,
+        const std::string &reduce_rtt,
+        const std::string &request_timeout,
+        const std::string &udp_relay_mode,
+        const std::string &congestion_controller,
+        const std::string &max_udp_relay_packet_size,
+        const std::string &max_open_streams,
+        const std::string &sni,
+        const std::string &fast_open,
+        tribool tfo,
+        tribool scv,
+        const std::string &underlying_proxy = ""
+        );
+
 void explodeVmess(std::string vmess, Proxy &node);
 void explodeSSR(std::string ssr, Proxy &node);
 void explodeSS(std::string ss, Proxy &node);
@@ -91,6 +117,7 @@ void explodeStdVMess(std::string vmess, Proxy &node);
 void explodeShadowrocket(std::string kit, Proxy &node);
 void explodeKitsunebi(std::string kit, Proxy &node);
 void explodeHysteria2(std::string hysteria2, Proxy &node);
+void explodeTUIC(std::string tuic, Proxy &node);
 
 /// Parse a link
 void explode(const std::string &link, Proxy &node);

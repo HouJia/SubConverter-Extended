@@ -224,7 +224,7 @@ void hysteria2Construct(
     const std::string &fingerprint,
     const std::string &alpn,
     const std::string &ca,
-    const std::string &caStr,
+    const std::string &ca_str,
     const std::string &cwnd,
     const std::string &hop_interval, 
     tribool tfo, 
@@ -245,9 +245,53 @@ void hysteria2Construct(
         node.Alpn = StringArray {alpn};
     }
     node.Ca = ca;
-    node.CaStr = caStr;
+    node.CaStr = ca_str;
     node.CWND = to_int(cwnd);
     node.HopInterval = to_int(hop_interval);
+}
+
+void tuicConstruct(
+        Proxy &node,
+        const std::string &group,
+        const std::string &remarks,
+        const std::string &server,
+        const std::string &port,
+        const std::string &uuid,
+        const std::string &password,
+        const std::string &ip,
+        const std::string &heartbeat_interval,
+        const std::string &alpn,
+        const std::string &disable_sni,
+        const std::string &reduce_rtt,
+        const std::string &request_timeout,
+        const std::string &udp_relay_mode,
+        const std::string &congestion_controller,
+        const std::string &max_udp_relay_packet_size,
+        const std::string &max_open_streams,
+        const std::string &sni,
+        const std::string &fast_open,
+        tribool tfo,
+        tribool scv,
+        const std::string &underlying_proxy
+){
+    commonConstruct(node, ProxyType::TUIC, group, remarks, server, port, tribool(), tfo, scv, tribool(), underlying_proxy);
+        node.Password = password;
+        node.UUID = uuid;
+        node.IP = ip;
+        node.HeartbeatInterval = heartbeat_interval;
+        if (!alpn.empty())
+        {
+            node.Alpn = StringArray {alpn};
+        }
+        node.DisableSNI= disable_sni;
+        node.ReduceRTT = reduce_rtt;
+        node.RequestTimeout = to_int(request_timeout);
+        node.UdpRelayMode = udp_relay_mode;
+        node.CongestionController = congestion_controller;
+        node.MaxUdpRelayPacketSize = to_int(max_udp_relay_packet_size);
+        node.MaxOpenStreams =  to_int(max_open_streams);
+        node.SNI = sni;
+        node.FastOpen = tribool(fast_open);
 }
 
 void explodeVmess(std::string vmess, Proxy &node)
@@ -1101,6 +1145,7 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes)
     std::string ip, ipv6, private_key, public_key, mtu; //wireguard
     std::string ports, obfs_protocol, up, up_speed, down, down_speed, auth, auth_str,/* obfs, sni,*/ fingerprint, ca, ca_str, recv_window_conn, recv_window, disable_mtu_discovery, hop_interval, alpn; //hysteria
     std::string obfs_password, cwnd; //hysteria2
+    std::string uuid,/*ip , password*/ heartbeat_interval, disable_sni, reduce_rtt, request_timeout, udp_relay_mode, congestion_controller, max_udp_relay_packet_size, max_open_streams, fast_open;   //TUIC
     string_array dns_server;
     tribool udp, tfo, scv;
     Node singleproxy;
@@ -1366,9 +1411,27 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes)
             singleproxy["cwnd"] >>= cwnd;
             singleproxy["hop-interval"] >>= hop_interval;
 
-            hysteria2Construct(node, group, ps, server, port, ports, up, down, password, obfs, obfs_password, sni, fingerprint, ca, ca_str, cwnd, alpn, hop_interval, tfo, scv, underlying_proxy);
+            hysteria2Construct(node, group, ps, server, port, ports, up, down, password, obfs, obfs_password, sni, fingerprint, alpn, ca, ca_str, cwnd, hop_interval, tfo, scv, underlying_proxy);
             break;
-
+        case "tuic"_hash:
+            group = TUIC_DEFAULT_GROUP;
+            singleproxy["uuid"] >>= uuid;
+            singleproxy["ip"] >>= ip;
+            singleproxy["password"] >>= password;
+            singleproxy["heartbeat_interval"] >>= heartbeat_interval;
+            if (singleproxy["alpn"].IsSequence())
+                singleproxy["alpn"][0] >>= alpn;
+            else
+                singleproxy["alpn"] >>= alpn;
+            singleproxy["disable-sni"] >>= disable_sni;
+            singleproxy["reduce-rtt"] >>= reduce_rtt;
+            singleproxy["request-timeout"] >>= request_timeout;
+            singleproxy["udp-relay-mode"] >>= udp_relay_mode;
+            singleproxy["congestion-controller"] >>= congestion_controller;
+            singleproxy["max-udp-relay-packet-size"] >>= max_udp_relay_packet_size;
+            singleproxy["max-open-streams"] >>= max_open_streams;
+            singleproxy["fast-open"] >>= fast_open;
+            tuicConstruct(node, group, ps, server, port, uuid, password, ip, heartbeat_interval, alpn, disable_sni, reduce_rtt, request_timeout, udp_relay_mode, congestion_controller, max_udp_relay_packet_size, max_open_streams, sni, fast_open, tfo, scv, underlying_proxy);
         default:
             continue;
         }
@@ -1547,6 +1610,7 @@ void explodeStdHysteria2(std::string hysteria2, Proxy &node) {
     obfs = getUrlArg(addition, "obfs");
     obfs_password = getUrlArg(addition, "obfs-password");
     sni = getUrlArg(addition, "sni");
+
     fingerprint = getUrlArg(addition, "pinSHA256");
     if (remarks.empty())
         remarks = add + ":" + port;
@@ -1562,6 +1626,78 @@ void explodeHysteria2(std::string hysteria2, Proxy &node) {
     hysteria2 = regReplace(hysteria2, "/\\?", "?", true, false);
     if (regMatch(hysteria2, "hysteria2://(.*?)[:](.*)")) {
         explodeStdHysteria2(hysteria2, node);
+        return;
+    }
+}
+
+void explodeStdTuic(std::string tuic, Proxy &node) {
+    std::string add, port,uuid, ip, password, token, heartbeat_interval, disable_sni, reduce_rtt, request_timeout;
+    std::string udp_relay_mode, congestion_controller, max_udp_relay_packet_size, max_open_streams;
+    std::string alpn, sni, fast_open, remarks, addition;
+    tribool tfo, scv;
+
+    tuic = tuic.substr(7);  // 去除 tuic://
+    string_size pos;
+
+    pos = tuic.rfind("#");
+    if (pos != tuic.npos) {
+        remarks = urlDecode(tuic.substr(pos + 1));
+        tuic.erase(pos);
+    }
+
+    pos = tuic.rfind("?");
+    if (pos != tuic.npos) {
+        addition = tuic.substr(pos + 1);
+        tuic.erase(pos);
+    }
+
+    // 支持 user:pass@host:port
+    if (strFind(tuic, "@")) {
+        if (regGetMatch(tuic, R"(^(.*?):(.*?)@(.*?):(\d+)$)", 5, 0, &uuid, &password, &add, &port))
+            return;
+    } else {
+        uuid = getUrlArg(addition, "uuid");
+        password = getUrlArg(addition, "password");
+        if (uuid.empty() || password.empty())
+            return;
+
+        if (!strFind(tuic, ":"))
+            return;
+
+        if (regGetMatch(tuic, R"(^(.*?):(\d+)$)", 3, 0, &ip, &port))
+            return;
+    }
+
+    // 其他参数
+    token = getUrlArg(addition, "token");
+    heartbeat_interval = getUrlArg(addition, "heartbeat_interval");
+    disable_sni = getUrlArg(addition, "disable_sni");
+    reduce_rtt = getUrlArg(addition, "reduce_rtt");
+    request_timeout = getUrlArg(addition, "request_timeout");
+    udp_relay_mode = getUrlArg(addition, "udp_relay_mode");
+    congestion_controller = getUrlArg(addition, "congestion_control");
+    max_udp_relay_packet_size = getUrlArg(addition, "max_udp_relay_packet_size");
+    max_open_streams = getUrlArg(addition, "max_open_streams");
+    alpn = getUrlArg(addition, "alpn");
+    sni = getUrlArg(addition, "sni");
+    fast_open = getUrlArg(addition, "fast_open");
+    scv = getUrlArg(addition, "insecure");
+
+    if (remarks.empty())
+        remarks = add + ":" + port;
+
+    tuicConstruct(node, TUIC_DEFAULT_GROUP, remarks, add, port, uuid, password, ip, heartbeat_interval, alpn,
+                  disable_sni, reduce_rtt, request_timeout, udp_relay_mode, congestion_controller,
+                  max_udp_relay_packet_size, max_open_streams, sni, fast_open, tfo, scv, "");
+}
+
+void explodeTUIC(std::string tuic, Proxy &node) {
+    tuic = regReplace(tuic, "(tuic)://", "tuic://");
+
+    // replace /? with ?
+    tuic = regReplace(tuic, "/\\?", "?", true, false);
+    if (regMatch(tuic, "tuic://(.*?)[:](.*)")) {
+        explodeStdTuic(tuic, node);
         return;
     }
 }
@@ -2463,6 +2599,8 @@ void explode(const std::string &link, Proxy &node)
         explodeTrojan(link, node);
     else if (strFind(link, "hysteria2://") || strFind(link, "hy2://"))
         explodeHysteria2(link, node);
+    else if (strFind(link, "tuic://") || strFind(link, "tuic://"))
+        explodeTUIC(link, node);
     else if(isLink(link))
         explodeHTTPSub(link, node);
 }
