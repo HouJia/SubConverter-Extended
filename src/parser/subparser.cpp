@@ -294,6 +294,35 @@ void tuicConstruct(
         node.FastOpen = tribool(fast_open);
 }
 
+void anytlsConstruct(
+        Proxy &node,
+        const std::string &group,
+        const std::string &remarks,
+        const std::string &server,
+        const std::string &port,
+        const std::string &password,
+        const std::string &sni,
+        const std::string &alpn,
+        const std::string &fingerprint,
+        const std::string &idle_session_check_interval,
+        const std::string &idle_session_timeout,
+        const std::string &min_idle_session,
+        tribool tfo,
+        tribool scv,
+        const std::string &underlying_proxy
+) {
+    commonConstruct(node, ProxyType::AnyTLS, group, remarks, server, port, tribool(), tfo, scv, tribool(), underlying_proxy);
+        node.Password = password;
+        node.SNI = sni;
+        if (!alpn.empty()) {
+            node.Alpn = StringArray{alpn};
+        }
+        node.Fingerprint = fingerprint;
+        node.IdleSessionCheckInterval = to_int(idle_session_check_interval);
+        node.IdleSessionTimeout = to_int(idle_session_timeout);
+        node.MinIdleSession = to_int(min_idle_session);
+}
+
 void explodeVmess(std::string vmess, Proxy &node)
 {
     std::string version, ps, add, port, type, id, aid, net, path, host, tls, sni;
@@ -1146,6 +1175,8 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes)
     std::string ports, obfs_protocol, up, up_speed, down, down_speed, auth, auth_str,/* obfs, sni,*/ fingerprint, ca, ca_str, recv_window_conn, recv_window, disable_mtu_discovery, hop_interval, alpn; //hysteria
     std::string obfs_password, cwnd; //hysteria2
     std::string uuid,/*ip , password*/ heartbeat_interval, disable_sni, reduce_rtt, request_timeout, udp_relay_mode, congestion_controller, max_udp_relay_packet_size, max_open_streams, fast_open;   //TUIC
+    std::string idle_session_check_interval, idle_session_timeout, min_idle_session;
+
     string_array dns_server;
     tribool udp, tfo, scv;
     Node singleproxy;
@@ -1432,6 +1463,19 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes)
             singleproxy["max-open-streams"] >>= max_open_streams;
             singleproxy["fast-open"] >>= fast_open;
             tuicConstruct(node, group, ps, server, port, uuid, password, ip, heartbeat_interval, alpn, disable_sni, reduce_rtt, request_timeout, udp_relay_mode, congestion_controller, max_udp_relay_packet_size, max_open_streams, sni, fast_open, tfo, scv, underlying_proxy);
+            break;
+        case "anytls"_hash: {
+            group = ANYTLS_DEFAULT_GROUP;
+            singleproxy["password"] >>= password;
+            singleproxy["sni"] >>= sni;
+            if (singleproxy["alpn"].IsSequence())
+                singleproxy["alpn"][0] >>= alpn;
+            else
+                singleproxy["alpn"] >>= alpn;
+            singleproxy["fingerprint"] >>= fingerprint;
+            anytlsConstruct(node, group, ps, server, port, password, sni, alpn, fingerprint, idle_session_check_interval, idle_session_timeout, min_idle_session, tfo, scv, underlying_proxy);
+            break;
+        }
         default:
             continue;
         }
@@ -1664,7 +1708,7 @@ void explodeStdTuic(std::string tuic, Proxy &node) {
         if (!strFind(tuic, ":"))
             return;
 
-        if (regGetMatch(tuic, R"(^(.*?):(\d+)$)", 3, 0, &ip, &port))
+        if (regGetMatch(tuic, R"(^(.*?):(\d+)$)", 3, 0, &add, &port))
             return;
     }
 
@@ -1698,6 +1742,61 @@ void explodeTUIC(std::string tuic, Proxy &node) {
     tuic = regReplace(tuic, "/\\?", "?", true, false);
     if (regMatch(tuic, "tuic://(.*?)[:](.*)")) {
         explodeStdTuic(tuic, node);
+        return;
+    }
+}
+
+void explodeStdAnyTLS(std::string anytls, Proxy &node) {
+    std::string add, port, password, sni, alpn, fingerprint, remarks, addition,idle_session_check_interval,idle_session_timeout,min_idle_session;
+    tribool tfo, scv;
+
+    anytls = anytls.substr(9);  // 去除 anytls://
+    string_size pos;
+
+    pos = anytls.rfind("#");
+    if (pos != anytls.npos) {
+        remarks = urlDecode(anytls.substr(pos + 1));
+        anytls.erase(pos);
+    }
+
+    pos = anytls.rfind("?");
+    if (pos != anytls.npos) {
+        addition = anytls.substr(pos + 1);
+        anytls.erase(pos);
+    }
+
+    // 支持 user:pass@host:port
+    if (strFind(anytls, "@")) {
+        if (regGetMatch(anytls, R"(^(.*?)@(.*?):(\d+)$)", 4, 0, &password, &add, &port))
+            return;
+    } else {
+        password = getUrlArg(addition, "password");
+        if (password.empty()) return;
+
+        if (!strFind(anytls, ":")) return;
+        if (regGetMatch(anytls, R"(^(.*?):(\d+)$)", 3, 0, &add, &port)) return;
+    }
+
+    // 其他参数
+    sni = getUrlArg(addition, "peer");
+    alpn = getUrlArg(addition, "alpn");
+    fingerprint = getUrlArg(addition, "hpkp");
+    tfo = tribool(getUrlArg(addition, "tfo"));
+    scv = tribool(getUrlArg(addition, "insecure"));
+
+    if (remarks.empty())
+        remarks = add + ":" + port;
+
+    anytlsConstruct(node, "AnyTLS", remarks, add, port, password, sni, alpn, fingerprint, idle_session_check_interval, idle_session_timeout, min_idle_session,tfo, scv, "");
+}
+
+void explodeAnyTLS(std::string anytls, Proxy &node) {
+    anytls = regReplace(anytls, "(anytls)://", "anytls://");
+
+    // replace /? with ?
+    anytls = regReplace(anytls, "/\\?", "?", true, false);
+    if (regMatch(anytls, "anytls://(.*?)[:](.*)")) {
+        explodeStdAnyTLS(anytls, node);
         return;
     }
 }
@@ -2601,6 +2700,8 @@ void explode(const std::string &link, Proxy &node)
         explodeHysteria2(link, node);
     else if (strFind(link, "tuic://") || strFind(link, "tuic://"))
         explodeTUIC(link, node);
+    else if (strFind(link, "anytls://") || strFind(link, "anytls://"))
+        explodeAnyTLS(link, node);
     else if(isLink(link))
         explodeHTTPSub(link, node);
 }
