@@ -126,6 +126,25 @@ void anytlsConstruct(
         const std::string &underlying_proxy = ""
 );
 
+void vlessConstruct(
+        Proxy &node,
+        const std::string &group,
+        const std::string &remarks,
+        const std::string &server,
+        const std::string &port,
+        const std::string &uuid,
+        const std::string &sni,
+        const std::string &alpn,
+        const std::string &fingerprint,
+        const std::string &flow,
+        const std::string &xtls,
+        const std::string &public_key,
+        const std::string &short_id,
+        tribool tfo,
+        tribool scv,
+        const std::string &underlying_proxy = ""
+);
+
 void explodeVmess(std::string vmess, Proxy &node);
 void explodeSSR(std::string ssr, Proxy &node);
 void explodeSS(std::string ss, Proxy &node);
@@ -137,6 +156,7 @@ void explodeKitsunebi(std::string kit, Proxy &node);
 void explodeHysteria2(std::string hysteria2, Proxy &node);
 void explodeTUIC(std::string tuic, Proxy &node);
 void explodeAnyTLS(std::string anytls, Proxy &node);
+void explodeVLESS(std::string vless, Proxy &node);
 
 /// Parse a link
 void explode(const std::string &link, Proxy &node);

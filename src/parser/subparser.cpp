@@ -323,6 +323,37 @@ void anytlsConstruct(
         node.MinIdleSession = to_int(min_idle_session);
 }
 
+void vlessConstruct(
+        Proxy &node,
+        const std::string &group,
+        const std::string &remarks,
+        const std::string &server,
+        const std::string &port,
+        const std::string &uuid,
+        const std::string &sni,
+        const std::string &alpn,
+        const std::string &fingerprint,
+        const std::string &flow,
+        const std::string &xtls,
+        const std::string &public_key,
+        const std::string &short_id,
+        tribool tfo,
+        tribool scv,
+        const std::string &underlying_proxy
+) {
+    commonConstruct(node, ProxyType::VLESS, group, remarks, server, port, tribool(), tfo, scv, tribool(), underlying_proxy);
+    node.UUID = uuid;
+    node.SNI = sni;
+    if (!alpn.empty()) {
+        node.Alpn = StringArray{alpn};
+    }
+    node.Fingerprint = fingerprint;
+    node.Flow = flow;
+    node.XTLS = to_int(xtls);
+    node.PublicKey = public_key;
+    node.ShortID = short_id;
+}
+
 void explodeVmess(std::string vmess, Proxy &node)
 {
     std::string version, ps, add, port, type, id, aid, net, path, host, tls, sni;
@@ -1176,6 +1207,7 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes)
     std::string obfs_password, cwnd; //hysteria2
     std::string uuid,/*ip , password*/ heartbeat_interval, disable_sni, reduce_rtt, request_timeout, udp_relay_mode, congestion_controller, max_udp_relay_packet_size, max_open_streams, fast_open;   //TUIC
     std::string idle_session_check_interval, idle_session_timeout, min_idle_session;
+    std::string flow, xtls, short_id;
 
     string_array dns_server;
     tribool udp, tfo, scv;
@@ -1242,7 +1274,24 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes)
 
             vmessConstruct(node, group, ps, server, port, "", id, aid, net, cipher, path, host, edge, tls, sni, udp, tfo, scv, tribool(), underlying_proxy);
             break;
-        case "ss"_hash:
+            case "vless"_hash: {
+            group = VLESS_DEFAULT_GROUP;
+            singleproxy["uuid"] >>= uuid;
+            singleproxy["servername"] >>= sni;
+            if (singleproxy["alpn"].IsSequence())
+                singleproxy["alpn"][0] >>= alpn;
+            else
+                singleproxy["alpn"] >>= alpn;
+            singleproxy["fingerprint"] >>= fingerprint;
+            singleproxy["flow"] >>= flow;
+            if (singleproxy["reality-opts"].IsDefined()) {
+                singleproxy["reality-opts"]["public-key"] >>= public_key;
+                singleproxy["reality-opts"]["short-id"] >>= short_id;
+            }
+            vlessConstruct(node, group, ps, server, port, uuid, sni, alpn, fingerprint, flow, xtls, public_key, short_id, tfo, scv, underlying_proxy);
+            break;
+            }
+            case "ss"_hash:
             group = SS_DEFAULT_GROUP;
 
             singleproxy["cipher"] >>= cipher;
@@ -1799,6 +1848,85 @@ void explodeAnyTLS(std::string anytls, Proxy &node) {
         explodeStdAnyTLS(anytls, node);
         return;
     }
+}
+
+void explodeStdVLESS(std::string vless, Proxy &node) {
+    std::string add, port, uuid, sni, alpn, fingerprint, remarks, addition, flow, xtls, public_key, short_id;
+    tribool tfo, scv;
+    std::string decoded, userinfo, hostinfo;
+    string_array user_parts;
+
+    vless = vless.substr(8);
+    string_size pos;
+
+    pos = vless.rfind("#");
+    if (pos != vless.npos) {
+        remarks = urlDecode(vless.substr(pos + 1));
+        vless.erase(pos);
+    }
+
+    pos = vless.rfind("?");
+    if (pos != vless.npos) {
+        addition = vless.substr(pos + 1);
+        vless.erase(pos);
+    }
+
+    decoded = urlSafeBase64Decode(vless);
+
+    // 尝试从URL参数中获取uuid
+    uuid = getUrlArg(addition, "uuid");
+
+    // 如果URL参数中没有uuid，尝试从decoded中解析
+    if (uuid.empty() && strFind(decoded, "@") && strFind(decoded, ":")) {
+        userinfo = decoded.substr(0, decoded.find('@'));
+        hostinfo = decoded.substr(decoded.find('@') + 1);
+
+        if (strFind(userinfo, ":")) {
+            user_parts = split(userinfo, ":");
+            if (user_parts.size() >= 2) {
+                uuid = user_parts[1];
+            }
+        } else {
+            uuid = userinfo;
+        }
+
+        if (regGetMatch(hostinfo, R"(^(.*?):(\d+)$)", 3, 0, &add, &port) != 0)
+            return;
+    } else if (regGetMatch(vless, R"(^(.*?):(\d+)$)", 3, 0, &add, &port) != 0) {
+        return;
+    }
+
+    if (uuid.empty()) return;
+
+    if (!addition.empty()) {
+        sni = getUrlArg(addition, "peer");
+        alpn = getUrlArg(addition, "alpn");
+        fingerprint = getUrlArg(addition, "hpkp");
+        flow = getUrlArg(addition, "flow");
+        xtls = getUrlArg(addition, "xtls");
+        public_key = getUrlArg(addition, "pbk");
+        short_id = getUrlArg(addition, "sid");
+        tfo = tribool(getUrlArg(addition, "tfo"));
+        scv = tribool(getUrlArg(addition, "insecure"));
+
+        if (remarks.empty()) {
+            remarks = urlDecode(getUrlArg(addition, "remark"));
+            if (remarks.empty())
+                remarks = urlDecode(getUrlArg(addition, "remarks"));
+        }
+    }
+
+    if (remarks.empty())
+        remarks = add + ":" + port;
+
+    vlessConstruct(node, VLESS_DEFAULT_GROUP, remarks, add, port, uuid, sni, alpn, fingerprint, flow, xtls, public_key, short_id, tfo, scv, "");
+}
+
+void explodeVLESS(std::string vless, Proxy &node) {
+    vless = regReplace(vless, "(vless)://", "vless://");
+    // replace /? with ?
+    vless = regReplace(vless, "/\\?", "?", true, false);
+    explodeStdVLESS(vless, node);
 }
 
 // peer = (public-key = bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=, allowed-ips = "0.0.0.0/0, ::/0", endpoint = engage.cloudflareclient.com:2408, client-id = 139/184/125),(public-key = bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=, endpoint = engage.cloudflareclient.com:2408)
@@ -2698,10 +2826,12 @@ void explode(const std::string &link, Proxy &node)
         explodeTrojan(link, node);
     else if (strFind(link, "hysteria2://") || strFind(link, "hy2://"))
         explodeHysteria2(link, node);
-    else if (strFind(link, "tuic://") || strFind(link, "tuic://"))
+    else if (strFind(link, "tuic://"))
         explodeTUIC(link, node);
-    else if (strFind(link, "anytls://") || strFind(link, "anytls://"))
+    else if (strFind(link, "anytls://"))
         explodeAnyTLS(link, node);
+    else if (strFind(link, "vless://"))
+        explodeVLESS(link, node);
     else if(isLink(link))
         explodeHTTPSub(link, node);
 }

@@ -609,6 +609,30 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
             if (!scv.is_undef())
                 singleproxy["skip-cert-verify"] = scv.get();
             break;
+        case ProxyType::VLESS:
+            singleproxy["type"] = "vless";
+            singleproxy["packet-encoding"] = "xudp";
+            singleproxy["tls"] = true;
+            if (!x.UUID.empty())
+                singleproxy["uuid"] = x.UUID;
+            if (!x.SNI.empty())
+                singleproxy["servername"] = x.SNI;
+            if (!x.Alpn.empty())
+                singleproxy["alpn"] = x.Alpn;
+            if (!x.Fingerprint.empty())
+                singleproxy["fingerprint"] = x.Fingerprint;
+            if (!x.Flow.empty())
+                singleproxy["flow"] = x.Flow;
+            if (x.XTLS == 2) {
+                singleproxy["flow"] = "xtls-rprx-vision";
+            }
+            if (!x.PublicKey.empty() && !x.ShortID.empty()) {
+                singleproxy["reality-opts"]["public-key"] = x.PublicKey;
+                singleproxy["reality-opts"]["short-id"] = x.ShortID;
+            }
+            if (!scv.is_undef())
+                singleproxy["skip-cert-verify"] = scv.get();
+            break;
         default:
             continue;
         }
@@ -2590,6 +2614,52 @@ void proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::v
 
                 break;
             }
+
+            case ProxyType::VLESS:
+            {
+                addSingBoxCommonMembers(proxy, x, "vless", allocator);
+                proxy.AddMember("packet_encoding", "xudp", allocator);
+
+                if (!x.UUID.empty())
+                    proxy.AddMember("uuid", rapidjson::StringRef(x.UUID.c_str()), allocator);
+
+                if (!x.SNI.empty())
+                    proxy.AddMember("sni", rapidjson::StringRef(x.SNI.c_str()), allocator);
+
+                if (!x.Flow.empty())
+                    proxy.AddMember("flow", rapidjson::StringRef(x.Flow.c_str()), allocator);
+
+                // TLS 配置
+                rapidjson::Value tls(rapidjson::kObjectType);
+                tls.AddMember("enabled", true, allocator);
+
+                if (!scv.is_undef())
+                    tls.AddMember("insecure", scv.get(), allocator);
+                if (!x.Fingerprint.empty())
+                    tls.AddMember("fingerprint", rapidjson::StringRef(x.Fingerprint.c_str()), allocator);
+                if (!x.Alpn.empty()) {
+                    rapidjson::Value alpn(rapidjson::kArrayType);
+                    for (const auto& item : x.Alpn)
+                        alpn.PushBack(rapidjson::StringRef(item.c_str()), allocator);
+                    tls.AddMember("alpn", alpn, allocator);
+                }
+                if (x.XTLS == 2){
+                    if (!x.PublicKey.empty() && !x.ShortID.empty()) {
+                        rapidjson::Value reality(rapidjson::kObjectType);
+                        reality.AddMember("enabled", true, allocator);
+                        if (!x.PublicKey.empty())
+                            reality.AddMember("public_key", rapidjson::StringRef(x.PublicKey.c_str()), allocator);
+                        if (!x.ShortID.empty())
+                            reality.AddMember("short_id", rapidjson::StringRef(x.ShortID.c_str()), allocator);
+                        tls.AddMember("reality", reality, allocator);
+                    }
+                }
+
+                proxy.AddMember("tls", tls, allocator);
+
+                break;
+            }
+
             case ProxyType::HTTP:
             case ProxyType::HTTPS:
             {

@@ -15,6 +15,7 @@ enum class ProxyType
     Shadowsocks,
     ShadowsocksR,
     VMess,
+    VLESS,
     Trojan,
     Snell,
     HTTP,
@@ -37,6 +38,8 @@ inline String getProxyTypeName(ProxyType type)
         return "SSR";
     case ProxyType::VMess:
         return "VMess";
+    case ProxyType::VLESS:
+        return "VLESS";
     case ProxyType::Trojan:
         return "Trojan";
     case ProxyType::Snell:
@@ -149,11 +152,18 @@ struct Proxy
     uint32_t IdleSessionCheckInterval;
     uint32_t IdleSessionTimeout;
     uint32_t MinIdleSession;
+
+    String Flow;
+    uint32_t XTLS;
+    String PacketEncoding;
+    String ShortID;
+
 };
 
 #define SS_DEFAULT_GROUP "SSProvider"
 #define SSR_DEFAULT_GROUP "SSRProvider"
 #define V2RAY_DEFAULT_GROUP "V2RayProvider"
+#define VLESS_DEFAULT_GROUP "VLESSProvider"
 #define SOCKS_DEFAULT_GROUP "SocksProvider"
 #define HTTP_DEFAULT_GROUP "HTTPProvider"
 #define TROJAN_DEFAULT_GROUP "TrojanProvider"
