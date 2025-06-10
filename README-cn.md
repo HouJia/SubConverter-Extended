@@ -306,7 +306,7 @@ http://127.0.0.1:25500/sub?target=%TARGET%&url=%URL%&emoji=%EMOJI%····
 #### 调用说明 (进阶)
 
 | 调用参数          | 必要性 | 示例                        | 解释                                                                                                                                                                                                          |
-| ------------- | :-: | :------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------- | :-: |:--------------------------| :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | target        |  必要 | surge&ver=4               | 指想要生成的配置类型，详见上方 [支持类型](#支持类型) 中的参数                                                                                                                                                                          |
 | url           |  可选 | https%3A%2F%2Fwww.xxx.com | 指机场所提供的订阅链接或代理节点的分享链接，需要经过 [URLEncode](https://www.urlencoder.org/) 处理，**可选的前提是在 `default_url` 中进行指定**。也可以使用 data URI。可使用 `tag:xxx,https%3A%2F%2Fwww.xxx.com` 指定该订阅的所有节点归属于`xxx`分组，用于配置文件中的`!!GROUP=XXX` 匹配 |
 | group         |  可选 | MySS                      | 用于设置该订阅的组名，多用于 SSD/SSR                                                                                                                                                                                      |
@@ -340,6 +340,7 @@ http://127.0.0.1:25500/sub?target=%TARGET%&url=%URL%&emoji=%EMOJI%····
 | classic       |  可选 | true / false              | 用于设置是否生成 Clash classical rule-provider                                                                                                                                                                      |
 | tls13         |  可选 | true / false              | 用于设置是否为节点增加tls1.3开启参数                                                                                                                                                                                       |
 | new_name      |  可选 | true / false              | 如果设置为 true，则将启用 Clash 的新组名称 (proxies, proxy-groups, rules)                                                                                                                                                  |
+| ua            |  可选 | shadowrocket%2F2.2.65     | 用于自定义User-Agent字符串，需要经过 [URLEncode](https://www.urlencoder.org/) 处理。如果不指定，将使用默认的User-Agent                                                                                                               |
 
 举个例子：
 
@@ -359,6 +360,25 @@ url=https%3A%2F%2Fdler.cloud%2Fsubscribe%2FABCDE%3Fclash%3Dvmess
 http://127.0.0.1:25500/sub?target=surge&ver=4&tfo=true&udp=true&emoji=true&exclude=%28%E6%B5%81%E9%87%8F%7C%E5%AE%98%E7%BD%91%29&url=https%3A%2F%2Fdler.cloud%2Fsubscribe%2FABCDE%3Fclash%3Dvmess
 
 最后将该链接填写至 Surge 的订阅处就大功告成了。
+```
+
+**使用自定义User-Agent的例子：**
+
+```txt
+有订阅 `https://example.com/subscribe`，想转换成 Clash 的订阅，并指定User-Agent为 `shadowrocket/2.2.65`
+
+首先确认需要用到的参数：
+target=clash 、 ua=shadowrocket/2.2.65
+url=https://example.com/subscribe
+
+然后将需要 URLEncode 的部分进行处理：
+ua=shadowrocket%2F2.2.65
+url=https%3A%2F%2Fexample.com%2Fsubscribe
+
+接着将所有元素进行拼接：
+http://127.0.0.1:25500/sub?target=clash&ua=shadowrocket%2F2.2.65&url=https%3A%2F%2Fexample.com%2Fsubscribe
+
+这样在获取订阅时就会使用指定的User-Agent字符串。
 ```
 
 ### 配置档案
