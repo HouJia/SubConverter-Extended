@@ -105,6 +105,10 @@ struct Proxy
     tribool AllowInsecure;
     tribool TLS13;
 
+    // Shadowsocks UDP-over-TCP options
+    tribool UdpOverTcp;
+    uint32_t UdpOverTcpVersion = 0;
+
     String UnderlyingProxy;
 
     uint16_t SnellVersion = 0;
@@ -123,6 +127,7 @@ struct Proxy
     String ClientId;
 
     String Ports;
+    String Mport;  // Alternative to Ports for Hysteria2
     String Up;
     uint32_t UpSpeed;
     String Down;
@@ -134,6 +139,12 @@ struct Proxy
     String CaStr;
     uint32_t RecvWindowConn;
     uint32_t RecvWindow;
+    // Hysteria2 additional receive window configs
+    uint64_t InitialStreamReceiveWindow = 0;
+    uint64_t MaxStreamReceiveWindow = 0;
+    uint64_t InitialConnectionReceiveWindow = 0;
+    uint64_t MaxConnectionReceiveWindow = 0;
+    uint32_t UdpMTU = 0;
     tribool DisableMtuDiscovery;
     uint32_t HopInterval;
     StringArray Alpn;
@@ -149,6 +160,7 @@ struct Proxy
     String UdpRelayMode;
     String CongestionController;
     uint32_t MaxUdpRelayPacketSize;
+    uint32_t MaxDatagramFrameSize = 0; // TUIC
     tribool FastOpen;
     uint32_t MaxOpenStreams;
 
@@ -157,9 +169,56 @@ struct Proxy
     uint32_t MinIdleSession;
 
     String Flow;
+    tribool FlowSet;  // Flag to indicate if Flow field was explicitly set (even if empty)
     uint32_t XTLS;
     String PacketEncoding;
+    tribool PacketAddr;
+    tribool GlobalPadding;
+    tribool AuthenticatedLength;
+    tribool XUDP;
     String ShortID;
+
+    // New parameters from mihomo
+    String IpVersion;                    // ip-version: ipv4/ipv6/dual/ipv4-prefer/ipv6-prefer
+    String ClientFingerprint;            // client-fingerprint: chrome/firefox/safari/ios/random/none
+    
+    // ECH (Encrypted Client Hello) options
+    tribool EchEnable;
+    String EchConfig;
+    
+    // SMUX (multiplexing) options for Shadowsocks
+    tribool SmuxEnabled;
+    String SmuxProtocol;                 // smux/yamux/h2mux
+    uint32_t SmuxMaxConnections;
+    uint32_t SmuxMinStreams;
+    uint32_t SmuxMaxStreams;
+    tribool SmuxPadding;
+    tribool SmuxStatistic;
+    tribool SmuxOnlyTcp;
+    
+    // mTLS options
+    String Certificate;                  // Certificate for mTLS
+    String PrivateKeyPem;                // Private key for mTLS
+    
+    // VLESS encryption
+    String VlessEncryption;              // mlkem768x25519plus.native/xorpub/random.1rtt/0rtt
+    
+    // WebSocket additional options
+    uint32_t WsMaxEarlyData;
+    String WsEarlyDataHeaderName;
+    tribool V2rayHttpUpgrade;
+    tribool V2rayHttpUpgradeFastOpen;
+    
+    // HTTP options for VLESS
+    String HttpMethod;
+    StringArray HttpPath;
+    
+    // Hysteria2 additional options
+    tribool HopIntervalTribool;          // Already have HopInterval as uint32_t, adding tribool version for better support
+    
+    // Trojan SS options
+    String TrojanSsMethod;
+    String TrojanSsPassword;
 
 };
 
