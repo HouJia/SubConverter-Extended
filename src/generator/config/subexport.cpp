@@ -537,6 +537,8 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
             singleproxy["type"] = "hysteria2";
             if (!x.Ports.empty())
                 singleproxy["ports"] = x.Ports;
+            if (!x.Mport.empty())
+                singleproxy["mport"] = x.Mport;
             if (!x.Up.empty())
                 singleproxy["up"] = x.UpSpeed;
             if (!x.Down.empty())
@@ -615,8 +617,13 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
         case ProxyType::VLESS:
             singleproxy["type"] = "vless";
             singleproxy["tls"] = true;
-            if (udp)
-                singleproxy["packet-encoding"] = "xudp";
+            // Output packet-encoding, xudp, packet-addr only if explicitly set
+            if (!x.PacketEncoding.empty())
+                singleproxy["packet-encoding"] = x.PacketEncoding;
+            if (!x.XUDP.is_undef())
+                singleproxy["xudp"] = x.XUDP.get();
+            if (!x.PacketAddr.is_undef())
+                singleproxy["packet-addr"] = x.PacketAddr.get();
             if (!x.UUID.empty())
                 singleproxy["uuid"] = x.UUID;
             if (!x.SNI.empty())
@@ -636,7 +643,8 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
                     singleproxy["network"] = x.TransferProtocol;
                     if(ext.clash_new_field_name)
                     {
-                        singleproxy["ws-opts"]["path"] = x.Path.empty() ? "/" : x.Path;
+                        if(!x.Path.empty())
+                            singleproxy["ws-opts"]["path"] = x.Path;
                         if(!x.Host.empty())
                             singleproxy["ws-opts"]["headers"]["Host"] = x.Host;
                         if(!x.Edge.empty())
@@ -644,7 +652,8 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
                     }
                     else
                     {
-                        singleproxy["ws-path"] = x.Path.empty() ? "/" : x.Path;
+                        if(!x.Path.empty())
+                            singleproxy["ws-path"] = x.Path;
                         if(!x.Host.empty())
                             singleproxy["ws-headers"]["Host"] = x.Host;
                         if(!x.Edge.empty())
@@ -654,7 +663,8 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
                 case "http"_hash:
                     singleproxy["network"] = x.TransferProtocol;
                     singleproxy["http-opts"]["method"] = "GET";
-                    singleproxy["http-opts"]["path"].push_back(x.Path.empty() ? "/" : x.Path);
+                    if(!x.Path.empty())
+                        singleproxy["http-opts"]["path"].push_back(x.Path);
                     if(!x.Host.empty())
                         singleproxy["http-opts"]["headers"]["Host"].push_back(x.Host);
                     if(!x.Edge.empty())
@@ -662,7 +672,8 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
                     break;
                 case "h2"_hash:
                     singleproxy["network"] = x.TransferProtocol;
-                    singleproxy["h2-opts"]["path"] = x.Path.empty() ? "/" : x.Path;
+                    if(!x.Path.empty())
+                        singleproxy["h2-opts"]["path"] = x.Path;
                     if(!x.Host.empty())
                         singleproxy["h2-opts"]["host"].push_back(x.Host);
                     break;
@@ -672,20 +683,25 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
                     singleproxy["grpc-opts"]["grpc-service-name"] = x.GRPCServiceName;
                     break;
                 default:
-                    continue;
+                    break;
             }
 
             if (!x.Fingerprint.empty())
                 singleproxy["fingerprint"] = x.Fingerprint;
+            if (!x.ClientFingerprint.empty())
+                singleproxy["client-fingerprint"] = x.ClientFingerprint;
             if (x.XTLS == 2) {
                 singleproxy["flow"] = "xtls-rprx-vision";
+            } else if (!x.FlowSet.is_undef() && x.FlowSet.get()) {
+                // Output flow field if it was explicitly set (even if empty)
+                singleproxy["flow"] = x.Flow;
             } else if (!x.Flow.empty()) {
+                // Fallback for backward compatibility
                 singleproxy["flow"] = x.Flow;
             }
             if (!x.PublicKey.empty() && !x.ShortID.empty()) {
                 singleproxy["reality-opts"]["public-key"] = x.PublicKey;
                 singleproxy["reality-opts"]["short-id"] = x.ShortID;
-                singleproxy["client-fingerprint"] = "random";
             }
             if (!scv.is_undef())
                 singleproxy["skip-cert-verify"] = scv.get();
@@ -696,8 +712,9 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
 
         // UDP is not supported yet in clash using snell
         // sees in https://dreamacro.github.io/clash/configuration/outbound.html#snell
-        if(udp && x.Type != ProxyType::Snell)
-            singleproxy["udp"] = true;
+        // Output UDP field when explicitly provided (true or false)
+        if(!x.UDP.is_undef() && x.Type != ProxyType::Snell)
+            singleproxy["udp"] = x.UDP.get();
         if(!tfo.is_undef())
             singleproxy["tfo"] = tfo.get();
         if(proxy_block)

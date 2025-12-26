@@ -77,7 +77,8 @@ void hysteria2Construct(
     const std::string &ca,
     const std::string &caStr,
     const std::string &cwnd,
-    const std::string &hop_interval, 
+    const std::string &hop_interval,
+    tribool udp,
     tribool tfo, 
     tribool scv, 
     const std::string &underlying_proxy = ""
@@ -145,6 +146,8 @@ void vlessConstruct(
         const std::string &xtls,
         const std::string &public_key,
         const std::string &short_id,
+        const std::string &client_fingerprint,
+        tribool udp,
         tribool tfo,
         tribool scv,
         const std::string &underlying_proxy = ""
