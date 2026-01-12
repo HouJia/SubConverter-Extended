@@ -688,8 +688,6 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
 
             if (!x.Fingerprint.empty())
                 singleproxy["fingerprint"] = x.Fingerprint;
-            if (!x.ClientFingerprint.empty())
-                singleproxy["client-fingerprint"] = x.ClientFingerprint;
             if (x.XTLS == 2) {
                 singleproxy["flow"] = "xtls-rprx-vision";
             } else if (!x.FlowSet.is_undef() && x.FlowSet.get()) {
@@ -702,6 +700,13 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
             if (!x.PublicKey.empty() && !x.ShortID.empty()) {
                 singleproxy["reality-opts"]["public-key"] = x.PublicKey;
                 singleproxy["reality-opts"]["short-id"] = x.ShortID;
+                if (!x.ClientFingerprint.empty()) {
+                    singleproxy["client-fingerprint"] = x.ClientFingerprint;
+                } else if (!x.Fingerprint.empty()) {
+                    singleproxy["client-fingerprint"] = x.Fingerprint;
+                } else {
+                    singleproxy["client-fingerprint"] = "random";
+                }
             }
             if (!scv.is_undef())
                 singleproxy["skip-cert-verify"] = scv.get();
