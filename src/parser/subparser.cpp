@@ -1406,8 +1406,10 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes)
                     singleproxy["path"] >>= path;
                     break;
             }
-            vlessConstruct(node, group, ps, server, port, uuid, sni, alpn, type, net, mode, host, path, fingerprint, flow, xtls, public_key, short_id, client_fingerprint, udp, tfo, scv, underlying_proxy);
+            tls = safe_as<std::string>(singleproxy["tls"]) == "true" ? "tls" : "";
             
+            vlessConstruct(node, group, ps, server, port, uuid, sni, alpn, type, net, mode, host, path, fingerprint, flow, xtls, public_key, short_id, client_fingerprint, udp, tfo, scv, underlying_proxy);
+            node.TLSSecure = tls == "tls";
             // Assign new parameters to node for VLESS
             node.IpVersion = ip_version;
             node.EchEnable = ech_enable;
