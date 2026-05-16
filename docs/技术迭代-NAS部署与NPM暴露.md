@@ -92,14 +92,14 @@ curl -s "http://127.0.0.1:25500/sub?target=clash&url=<URLEncode后的订阅链�
 | 情况 | 表现 |
 |------|------|
 | 外部 INI 规则集 **> 64** 且未调高上限 | 日志 `Ruleset count in external config has exceeded limit.`，**整份** `config=` 不生效，回退内置 `🔰 节点选择` 等默认组 |
-| 自建 NAS、配置可信 | 建议 `max_allowed_rulesets = 0` 或 ≥ 实际 `ruleset=` 行数 |
+| 自建 NAS、配置可信 | 建议 `max_allowed_rulesets = 256`（本仓库默认）或按实际 `ruleset=` 行数略留余量；**慎用 0（无上限）** |
 
 本仓库分支 `fix/max-allowed-rulesets-default`：
 
-- 编译默认值改为 `0`（`src/handler/settings.h`）
-- `deploy/nas/pref.toml` 供挂载到容器 `/base/pref.toml`（见 `deploy/docker-compose.nas.example.yml`）
+- 编译默认值改为 `256`（`src/handler/settings.h`）
+- `deploy/nas/pref.toml` + `deploy/nas/Dockerfile` 构建镜像 `subconverter:nas-amd64`
 
-官方镜像 `tindy2013/subconverter:latest` 未挂载 `pref.toml` 时仍用镜像内默认 **64**；NAS 请挂载 `deploy/nas/pref.toml` 或自建镜像后再部署。
+NAS 部署：在仓库根目录 `docker buildx build -f deploy/nas/Dockerfile -t subconverter:nas-amd64 --load .`，将镜像导入 QNAP 后 `docker run` 替换原容器（见 `deploy/docker-compose.nas.example.yml`）。
 
 ## 8. 常见现象
 
