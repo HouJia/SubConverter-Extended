@@ -3,3 +3,4 @@
 #   docker buildx build --platform linux/amd64 -f deploy/nas/Dockerfile -t subconverter:nas-amd64 --load .
 FROM tindy2013/subconverter:latest
 COPY deploy/nas/pref.toml /base/pref.toml
+COPY deploy/nas/config-template.ini /base/config/houjia-template.ini

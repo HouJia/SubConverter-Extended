@@ -91,8 +91,9 @@ curl -s "http://127.0.0.1:25500/sub?target=clash&url=<URLEncode后的订阅链�
 
 | 情况 | 表现 |
 |------|------|
-| 外部 INI 规则集 **> 64** 且未调高上限 | 日志 `Ruleset count in external config has exceeded limit.`，**整份** `config=` 不生效，回退内置 `🔰 节点选择` 等默认组 |
-| 自建 NAS、配置可信 | 建议 `max_allowed_rulesets = 256`（本仓库默认）或按实际 `ruleset=` 行数略留余量；**慎用 0（无上限）** |
+| 外部 INI 规则集 **> max_allowed_rulesets** | 日志 `Ruleset count in external config has exceeded limit.`，**整份** `config=` 不生效 |
+| **`config=` 指向 GitHub raw 且 NAS 拉取失败** | 日志 `Load external configuration failed. Reason: line 0: Empty document`（**不是超限**），表现同为回退 `🔰 节点选择` |
+| 自建 NAS | `max_allowed_rulesets = 256`；`config=` 优先用镜像内 `config/houjia-template.ini` 或 jsDelivr，避免 `raw.githubusercontent.com` |
 
 本仓库分支 `fix/max-allowed-rulesets-default`：
 
