@@ -85,14 +85,31 @@ curl -s "http://127.0.0.1:25500/sub?target=clash&url=<URLEncode后的订阅链�
 - [ ] 经 NPM `/subapi/version`、`/subapi/sub?` 与内网结果一致
 - [ ] 无需开放公网 25500 端口
 
-## 7. 常见现象
+## 7. 外部配置 `config=` 与 `max_allowed_rulesets`
+
+上游 subconverter 在 `[advanced]` 中默认 **`max_allowed_rulesets = 64`**，用于限制单次外部 INI/TOML 中的 `ruleset=` 条数，避免公网开放实例被超大配置拖垮（内存、并发拉取远程规则、单次请求耗时）。**0 表示不限制**（见 `README-cn.md`）。
+
+| 情况 | 表现 |
+|------|------|
+| 外部 INI 规则集 **> 64** 且未调高上限 | 日志 `Ruleset count in external config has exceeded limit.`，**整份** `config=` 不生效，回退内置 `🔰 节点选择` 等默认组 |
+| 自建 NAS、配置可信 | 建议 `max_allowed_rulesets = 0` 或 ≥ 实际 `ruleset=` 行数 |
+
+本仓库分支 `fix/max-allowed-rulesets-default`：
+
+- 编译默认值改为 `0`（`src/handler/settings.h`）
+- `deploy/nas/pref.toml` 供挂载到容器 `/base/pref.toml`（见 `deploy/docker-compose.nas.example.yml`）
+
+官方镜像 `tindy2013/subconverter:latest` 未挂载 `pref.toml` 时仍用镜像内默认 **64**；NAS 请挂载 `deploy/nas/pref.toml` 或自建镜像后再部署。
+
+## 8. 常见现象
 
 | 现象 | 说明 |
 |------|------|
 | `No nodes were found!` | API 已通；`url` 参数无效或无法拉取节点，**不是** NPM 404 |
 | `/subc` | 已由 NPM 301 到 `/subapi`，subconverter 本身无 `/subc` 路径 |
+| 未用自己写的策略组名 | 查日志是否 `exceeded limit`；见上文 §7 |
 
-## 8. 跨项目依赖
+## 9. 跨项目依赖
 
 | 项目 | 分支（建议） |
 |------|----------------|
@@ -100,8 +117,9 @@ curl -s "http://127.0.0.1:25500/sub?target=clash&url=<URLEncode后的订阅链�
 | nginx-proxy-manager | `feature/nas-qnap-phase1-proxy` |
 | sub-web | `feature/npm-subpath-subw` |
 
-## 9. 变更记录
+## 10. 变更记录
 
 | 日期 | 说明 |
 |------|------|
 | 2026-05-16 | 初版：明确无源码改动，文档化 NAS + NPM `/subapi` |
+| 2026-05-16 | §7：`max_allowed_rulesets` 与 `deploy/nas/pref.toml` 挂载说明 |

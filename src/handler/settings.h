@@ -63,7 +63,7 @@ struct Settings
     int cacheSubscription = 60, cacheConfig = 300, cacheRuleset = 21600;
 
     //limits
-    size_t maxAllowedRulesets = 64, maxAllowedRules = 32768;
+    size_t maxAllowedRulesets = 0, maxAllowedRules = 32768;
     bool scriptCleanContext = false;
 
     //cron system

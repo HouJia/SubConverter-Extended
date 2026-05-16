@@ -9,5 +9,5 @@ services:
     ports:
       - "25500:25500"
     volumes:
-      # 按需挂载配置与规则；也可使用仓库 runtime/subconverter
-      - ./profiles:/base
+      # 挂载 deploy/nas/pref.toml（含 max_allowed_rulesets=0，支持大型外部 INI）
+      - ./nas/pref.toml:/base/pref.toml:ro
