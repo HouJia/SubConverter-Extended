@@ -1,7 +1,7 @@
 name: GitHub CI
 on: 
   push:
-    branches: [ master ]
+    branches: [ master, hjsmaster, 'feature/**' ]
     tags:
       - '**'
   workflow_dispatch:

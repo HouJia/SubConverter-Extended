@@ -1,0 +1,5 @@
+# 轻量叠加：基于 tindy2013 预编译镜像，仅覆盖 pref/外部配置（无 VLESS/TUIC 源码能力）
+#   docker buildx build --platform linux/amd64 -f deploy/nas/Dockerfile.overlay -t subconverter:nas-overlay --load .
+FROM tindy2013/subconverter:latest
+COPY deploy/nas/pref.toml /base/pref.toml
+COPY deploy/nas/config-template.ini /base/config/houjia-template.ini

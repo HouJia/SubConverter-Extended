@@ -2,10 +2,10 @@
 
 在各种订阅格式之间进行转换的实用程序.
 
-[![Build Status](https://github.com/tindy2013/subconverter/actions/workflows/build.yml/badge.svg)](https://github.com/tindy2013/subconverter/actions)
-[![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/tindy2013/subconverter.svg)](https://github.com/tindy2013/subconverter/tags)
-[![GitHub release](https://img.shields.io/github/release/tindy2013/subconverter.svg)](https://github.com/tindy2013/subconverter/releases)
-[![GitHub license](https://img.shields.io/github/license/tindy2013/subconverter.svg)](https://github.com/tindy2013/subconverter/blob/master/LICENSE)
+[![Build Status](https://github.com/metacubex/subconverter/actions/workflows/build.yml/badge.svg)](https://github.com/metacubex/subconverter/actions)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/metacubex/subconverter.svg)](https://github.com/metacubex/subconverter/tags)
+[![GitHub release](https://img.shields.io/github/release/metacubex/subconverter.svg)](https://github.com/metacubex/subconverter/releases)
+[![GitHub license](https://img.shields.io/github/license/metacubex/subconverter.svg)](https://github.com/metacubex/subconverter/blob/master/LICENSE)
 
 * * *
 
@@ -150,7 +150,7 @@
 
 3.  目标类型为 `mixed` 时，会输出所有支持的节点的单链接组成的普通订阅（Base64编码）
 
-4.  目标类型为 `auto` 时，会根据请求的 `User-Agent` 自动判断输出的目标类型，匹配规则可参见 [此处](https://github.com/tindy2013/subconverter/blob/master/src/handler/interfaces.cpp#L121) （该链接有可能因为代码修改而不能准确指向相应的代码）
+4.  目标类型为 `auto` 时，会根据请求的 `User-Agent` 自动判断输出的目标类型，匹配规则可参见 [此处](https://github.com/metacubex/subconverter/blob/master/src/handler/interfaces.cpp#L121) （该链接有可能因为代码修改而不能准确指向相应的代码）
 
 * * *
 
@@ -306,7 +306,7 @@ http://127.0.0.1:25500/sub?target=%TARGET%&url=%URL%&emoji=%EMOJI%····
 #### 调用说明 (进阶)
 
 | 调用参数          | 必要性 | 示例                        | 解释                                                                                                                                                                                                          |
-| ------------- | :-: | :------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------- | :-: |:--------------------------| :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | target        |  必要 | surge&ver=4               | 指想要生成的配置类型，详见上方 [支持类型](#支持类型) 中的参数                                                                                                                                                                          |
 | url           |  可选 | https%3A%2F%2Fwww.xxx.com | 指机场所提供的订阅链接或代理节点的分享链接，需要经过 [URLEncode](https://www.urlencoder.org/) 处理，**可选的前提是在 `default_url` 中进行指定**。也可以使用 data URI。可使用 `tag:xxx,https%3A%2F%2Fwww.xxx.com` 指定该订阅的所有节点归属于`xxx`分组，用于配置文件中的`!!GROUP=XXX` 匹配 |
 | group         |  可选 | MySS                      | 用于设置该订阅的组名，多用于 SSD/SSR                                                                                                                                                                                      |
@@ -340,6 +340,7 @@ http://127.0.0.1:25500/sub?target=%TARGET%&url=%URL%&emoji=%EMOJI%····
 | classic       |  可选 | true / false              | 用于设置是否生成 Clash classical rule-provider                                                                                                                                                                      |
 | tls13         |  可选 | true / false              | 用于设置是否为节点增加tls1.3开启参数                                                                                                                                                                                       |
 | new_name      |  可选 | true / false              | 如果设置为 true，则将启用 Clash 的新组名称 (proxies, proxy-groups, rules)                                                                                                                                                  |
+| ua            |  可选 | shadowrocket%2F2.2.65     | 用于自定义User-Agent字符串，需要经过 [URLEncode](https://www.urlencoder.org/) 处理。如果不指定，将使用默认的User-Agent                                                                                                               |
 
 举个例子：
 
@@ -359,6 +360,25 @@ url=https%3A%2F%2Fdler.cloud%2Fsubscribe%2FABCDE%3Fclash%3Dvmess
 http://127.0.0.1:25500/sub?target=surge&ver=4&tfo=true&udp=true&emoji=true&exclude=%28%E6%B5%81%E9%87%8F%7C%E5%AE%98%E7%BD%91%29&url=https%3A%2F%2Fdler.cloud%2Fsubscribe%2FABCDE%3Fclash%3Dvmess
 
 最后将该链接填写至 Surge 的订阅处就大功告成了。
+```
+
+**使用自定义User-Agent的例子：**
+
+```txt
+有订阅 `https://example.com/subscribe`，想转换成 Clash 的订阅，并指定User-Agent为 `shadowrocket/2.2.65`
+
+首先确认需要用到的参数：
+target=clash 、 ua=shadowrocket/2.2.65
+url=https://example.com/subscribe
+
+然后将需要 URLEncode 的部分进行处理：
+ua=shadowrocket%2F2.2.65
+url=https%3A%2F%2Fexample.com%2Fsubscribe
+
+接着将所有元素进行拼接：
+http://127.0.0.1:25500/sub?target=clash&ua=shadowrocket%2F2.2.65&url=https%3A%2F%2Fexample.com%2Fsubscribe
+
+这样在获取订阅时就会使用指定的User-Agent字符串。
 ```
 
 ### 配置档案
@@ -382,7 +402,7 @@ http://127.0.0.1:25500/getprofile?name=%NAME%&token=%TOKEN%
 
 应当注意的是，此处文件内的参数**无需进行 URLEncode**，且此处的 `token` 与 `api_mode` 的状态无关。
 
-在程序目录内的任意位置创建一个新的文档文件（推荐保存至 `profiles` 文件夹内，以使整洁目录及便于后续维护），如 `formyairport.ini`，并仿照 [示例文档](https://github.com/tindy2013/subconverter/blob/master/base/profiles/example_profile.ini) 根据配置好的参数填写进去即可。
+在程序目录内的任意位置创建一个新的文档文件（推荐保存至 `profiles` 文件夹内，以使整洁目录及便于后续维护），如 `formyairport.ini`，并仿照 [示例文档](https://github.com/metacubex/subconverter/blob/master/base/profiles/example_profile.ini) 根据配置好的参数填写进去即可。
 
 <details>
 <summary>举个例子：</summary>
@@ -408,7 +428,7 @@ exclude=(流量|官网)
 
 > 关于 subconverter 主程序目录中 `pref.ini` 文件的解释，其余格式的配置文件不再赘述，与之相仿。
 
-注：本部分内容以本程序中的 [`pref.example.ini`](https://github.com/tindy2013/subconverter/blob/master/base/pref.example.ini) 或 [`pref.example.yml`](https://github.com/tindy2013/subconverter/blob/master/base/pref.example.yml) 或 [`pref.example.toml`](https://github.com/tindy2013/subconverter/blob/master/base/pref.example.toml) 为准，本文档可能由于更新不及时，内容不适用于新版本。
+注：本部分内容以本程序中的 [`pref.example.ini`](https://github.com/metacubex/subconverter/blob/master/base/pref.example.ini) 或 [`pref.example.yml`](https://github.com/metacubex/subconverter/blob/master/base/pref.example.yml) 或 [`pref.example.toml`](https://github.com/metacubex/subconverter/blob/master/base/pref.example.toml) 为准，本文档可能由于更新不及时，内容不适用于新版本。
 
 加载配置文件时会按照`pref.toml`、`pref.yml`、`pref.ini`的优先级顺序加载优先级高的配置文件
 
@@ -935,6 +955,8 @@ custom_proxy_group=🇯🇵 日本延迟最低`url-test`(日|JP)`http://www.gsta
 # 表示创建一个叫 🇯🇵 日本延迟最低 的 url-test 策略组,并向其中添加名字含'日','JP'的节点，每隔300秒测试一次，测速超时为5s
 custom_proxy_group=负载均衡`load-balance`.*`http://www.gstatic.com/generate_204`300,,100
 # 表示创建一个叫 负载均衡 的 load-balance 策略组,并向其中添加所有的节点，每隔300秒测试一次，切换节点的延迟容差为100ms
+custom_proxy_group=负载均衡`load-balance`.*`http://www.gstatic.com/generate_204`300,,100`round-robin
+# 表示创建一个叫 负载均衡 的 load-balance 策略组,使用 round-robin 策略（默认使用 consistent-hashing）
 custom_proxy_group=🇯🇵 JP`select`沪日`日本`[]🇯🇵 日本延迟最低
 # 表示创建一个叫 🇯🇵 JP 的 select 策略组,并向其中**依次**添加名字含'沪日','日本'的节点，以及引用上述所创建的 🇯🇵 日本延迟最低 策略组
 custom_proxy_group=节点选择`select`(^(?!.*(美国|日本)).*)
@@ -1135,7 +1157,7 @@ custom_proxy_group=节点选择`select`(^(?!.*(美国|日本)).*)
 
 > 本部分用于 链接参数 **`&config=`**
 
-注：本部分内容以本程序中的 [`/config/example_external_config.ini`](https://github.com/tindy2013/subconverter/blob/master/base/config/example_external_config.ini) 或 [`/config/example_external_config.yml`](https://github.com/tindy2013/subconverter/blob/master/base/config/example_external_config.yml) 或 [`/config/example_external_config.toml`](https://github.com/tindy2013/subconverter/blob/master/base/config/example_external_config.toml) 为准，本文档可能由于更新不及时，内容不适用于新版本。
+注：本部分内容以本程序中的 [`/config/example_external_config.ini`](https://github.com/metacubex/subconverter/blob/master/base/config/example_external_config.ini) 或 [`/config/example_external_config.yml`](https://github.com/metacubex/subconverter/blob/master/base/config/example_external_config.yml) 或 [`/config/example_external_config.toml`](https://github.com/metacubex/subconverter/blob/master/base/config/example_external_config.toml) 为准，本文档可能由于更新不及时，内容不适用于新版本。
 
 将文件按照以下格式写好，上传至 Github Gist 或者 其他**可访问**网络位置
 经过 [URLEncode](https://www.urlencoder.org/) 处理后，添加至 `&config=` 即可调用
@@ -1367,7 +1389,7 @@ http://127.0.0.1:25500/render?path=xxx&额外的调试或控制参数
 
 > 启动程序后，在本地生成对应的配置文件文本
 
-在程序目录内的 [generate.ini](https://github.com/tindy2013/subconverter/blob/master/base/generate.ini) 中设定文件块(`[xxx]`)，生成的文件名(path=xxx)以及其所需要包含的参数，例如：
+在程序目录内的 [generate.ini](https://github.com/metacubex/subconverter/blob/master/base/generate.ini) 中设定文件块(`[xxx]`)，生成的文件名(path=xxx)以及其所需要包含的参数，例如：
 
 ```ini
 [test]
@@ -1389,7 +1411,7 @@ profile=profiles/example_profile.ini
 
 > 自动上传 gist ，可以用于 Clash For Android / Surge 等进行远程订阅
 
-在程序目录内的 [gistconf.ini](https://github.com/tindy2013/subconverter/blob/master/base/gistconf.ini) 中添加 `Personal Access Token`（[在此创建](https://github.com/settings/tokens/new?scopes=gist&description=Subconverter)）例如：
+在程序目录内的 [gistconf.ini](https://github.com/metacubex/subconverter/blob/master/base/gistconf.ini) 中添加 `Personal Access Token`（[在此创建](https://github.com/settings/tokens/new?scopes=gist&description=Subconverter)）例如：
 
 ```ini
 [common]
