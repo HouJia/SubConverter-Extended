@@ -44,13 +44,36 @@ port = 25500
 
 ### 3.2 与 sub-web 的 URL 关系
 
-sub-web 生成链接格式：
+#### 这是示例还是部署必填？
+
+| 内容 | 性质 | 说明 |
+|------|------|------|
+| 路径 `/subapi`、`/subapi/sub?`、`/subapi/version` | **固定约定** | NPM 反代与 sub-web 代码写死的路径规则，**不能改** |
+| `https://<你的域名>:<HTTPS端口>` | **部署时必填（每环境不同）** | 你的公网域名 + HTTPS 端口，**不是**文档里的占位符 |
+| 下文整行 URL | **配置完成后的示例** | 展示 sub-web 生成给终端用户的链接**长什么样**，便于联调对照 |
+
+**本仓库（subconverter）部署本身不写入该 URL**；只需保证容器 `:25500` 与 NPM 的 `/subapi` 映射正确。
+
+**sub-web 部署时必须配置真实后端**（见 `sub-web` 仓库 `.env`）：
+
+```bash
+# 勿带末尾 /sub?；sub-web 会自动拼接
+VITE_SUBCONVERTER_DEFAULT_BACKEND=https://<你的域名>:<HTTPS端口>/subapi
+```
+
+部署 sub-web 前，向使用方确认并填入：
+
+1. 公网 **域名**（或 DDNS 主机名）
+2. **HTTPS 端口**（NPM 对外端口，如 `443`、`8443`）
+3. NPM 是否已将 `/subapi` → NAS `subconverter:25500`（路径与上表一致）
+
+配置完成后，sub-web「定制订阅」等入口生成的链接**形如**（域名端口换成你确认的实值）：
 
 ```text
 https://<你的域名>:<HTTPS端口>/subapi/sub?target=clash&url=...
 ```
 
-版本检测逻辑（sub-web）：`DEFAULT_BACKEND` 必须以 **`sub?` 结尾**，内部会 `slice(0,-5)+'/version'` 得到 `/subapi/version`。
+版本检测逻辑（sub-web）：运行时 `DEFAULT_BACKEND` = 上式中的 `VITE_SUBCONVERTER_DEFAULT_BACKEND` + `/sub?`，必须以 **`sub?` 结尾**；页眉版本请求会对 `sub?` 做 `slice(0,-5)+'/version'`，即访问 `/subapi/version`。
 
 ## 4. 本仓库可选交付（按需）
 
