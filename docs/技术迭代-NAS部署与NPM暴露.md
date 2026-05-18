@@ -17,8 +17,8 @@ subconverter 提供订阅转换 HTTP API，默认端口 **25500**。
 
 外网不直接暴露 `25500`，由 NPM 映射为：
 
-- `https://nas.example.com:44/subapi` → `/version`
-- `https://nas.example.com:44/subapi/sub?...` → `/sub?...`
+- `https://<你的域名>:<HTTPS端口>/subapi` → `/version`
+- `https://<你的域名>:<HTTPS端口>/subapi/sub?...` → `/sub?...`
 
 ## 2. NAS 现状（参考）
 
@@ -26,7 +26,7 @@ subconverter 提供订阅转换 HTTP API，默认端口 **25500**。
 |----|-----|
 | 容器名 | `subconverter` |
 | 端口 | `0.0.0.0:25500→25500` |
-| 内网访问 | `http://192.168.1.100:25500/` |
+| 内网访问 | `http://<NAS内网IP>:25500/` |
 
 ## 3. 配置检查
 
@@ -47,7 +47,7 @@ port = 25500
 sub-web 生成链接格式：
 
 ```text
-https://nas.example.com:44/subapi/sub?target=clash&url=...
+https://<你的域名>:<HTTPS端口>/subapi/sub?target=clash&url=...
 ```
 
 版本检测逻辑（sub-web）：`DEFAULT_BACKEND` 必须以 **`sub?` 结尾**，内部会 `slice(0,-5)+'/version'` 得到 `/subapi/version`。

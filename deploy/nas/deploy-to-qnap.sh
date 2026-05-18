@@ -22,5 +22,5 @@ ssh -o BatchMode=yes "$NAS_HOST" "$DOCKER_REMOTE stop $CONTAINER 2>/dev/null || 
 
 echo "==> verify"
 sleep 2
-curl -sS "http://192.168.1.100:${PORT}/version" || true
+curl -sS "http://${NAS_IP:-127.0.0.1}:${PORT}/version" || true
 ssh -o BatchMode=yes "$NAS_HOST" "$DOCKER_REMOTE exec $CONTAINER grep max_allowed_rulesets /base/pref.toml"
