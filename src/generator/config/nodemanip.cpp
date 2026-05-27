@@ -260,18 +260,26 @@ int addNodes(std::string link, std::vector<Proxy> &allNodes, int groupID,
       if (startsWith(link, "surge:///install-config")) // surge config link
         link = urlDecode(getUrlArg(link, "url"));
 
-      // Replace browser UA with clash.meta
-      if (request_headers) {
-        auto ua_it = request_headers->find("User-Agent");
-        if (ua_it != request_headers->end() && isBrowserUA(ua_it->second)) {
+      // UA: ?ua= 优先；否则将浏览器 UA 替换为 clash.meta
+      string_icase_map fetch_headers;
+      string_icase_map *hdr = request_headers;
+      if (request_headers)
+        fetch_headers = *request_headers;
+      if (parse_set.custom_user_agent && !parse_set.custom_user_agent->empty()) {
+        fetch_headers["User-Agent"] = *parse_set.custom_user_agent;
+        hdr = &fetch_headers;
+      } else if (request_headers) {
+        auto ua_it = fetch_headers.find("User-Agent");
+        if (ua_it != fetch_headers.end() && isBrowserUA(ua_it->second)) {
           writeLog(LOG_TYPE_INFO, "检测到浏览器 UA，已替换为 clash.meta UA "
                                   "以避免被拦截");
           ua_it->second = "clash.meta";
+          hdr = &fetch_headers;
         }
       }
 
-      strSub = webGet(link, proxy, global.cacheSubscription, &extra_headers,
-                      request_headers, parse_set.fetch_context);
+      strSub = webGet(link, proxy, global.cacheSubscription, &extra_headers, hdr,
+                      parse_set.fetch_context);
     }
     /*
     if(strSub.size() == 0)

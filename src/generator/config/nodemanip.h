@@ -26,6 +26,7 @@ struct parse_settings
     bool authorized = false;
     FetchContext fetch_context = FetchContext::TrustedConfig;
     string_icase_map *request_header = nullptr;
+    std::string *custom_user_agent = nullptr;
 #ifndef NO_JS_RUNTIME
     qjs::Runtime *js_runtime = nullptr;
     qjs::Context *js_context = nullptr;
