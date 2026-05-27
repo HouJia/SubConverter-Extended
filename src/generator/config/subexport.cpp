@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <climits>
+#include <cctype>
 #include <cmath>
 #include <iostream>
 #include <numeric>
@@ -3153,6 +3154,25 @@ vectorToJsonArray(const std::vector<std::string> &array,
   for (const auto &x : array)
     result.PushBack(rapidjson::Value(trim(x).c_str(), allocator), allocator);
   return result;
+}
+
+static rapidjson::Value buildSingBoxHysteria2ServerPorts(const std::string &ports, rapidjson::MemoryPoolAllocator<> &allocator)
+{
+    rapidjson::Value result(rapidjson::kArrayType);
+    string_array port_list = split(ports, ",");
+    for (const auto &raw_port : port_list)
+    {
+        std::string port_entry = trim(raw_port);
+        if (port_entry.empty())
+            continue;
+
+        const bool is_single_port = std::all_of(port_entry.begin(), port_entry.end(), [](unsigned char ch) { return std::isdigit(ch); });
+        if (is_single_port)
+            port_entry = port_entry + ":" + port_entry;
+
+        result.PushBack(rapidjson::Value(port_entry.c_str(), allocator), allocator);
+    }
+    return result;
 }
 
 void proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json,

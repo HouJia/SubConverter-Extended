@@ -1,0 +1,13 @@
+# QNAP / 家庭 NAS 示例：仅 subconverter，供 NPM /subapi 反代到 25500
+# 使用：复制为 docker-compose.yml 后 docker compose up -d
+
+services:
+  subconverter:
+    image: tindy2013/subconverter:latest
+    container_name: subconverter
+    restart: unless-stopped
+    ports:
+      - "25500:25500"
+    volumes:
+      # 挂载 deploy/nas/pref.toml（max_allowed_rulesets=256，支持大型外部 INI）
+      - ./nas/pref.toml:/base/pref.toml:ro
