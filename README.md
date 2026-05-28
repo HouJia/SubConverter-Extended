@@ -17,10 +17,8 @@
 <h3>⚡ 现代化的订阅转换后端 | 深度适配 Mihomo 内核 ⚡</h3>
 
 > [!IMPORTANT]
-> **本仓库为 HouJia 维护 fork**（默认分支 **`hjsmaster`**），在 [SubConverter-Extended](https://github.com/Aethersailor/SubConverter-Extended) 基线上叠加 NAS 部署、tindy/MetaCubeX 能力补缺与自建配置。  
-> **版本号**：SemVer 构建元数据 `1.1.9+houjia.N`（基于 Extended v1.1.9 release  lineage，代码跟踪 Extended master）。  
-> **配套前端**：[HouJia/sub-web](https://github.com/HouJia/sub-web)（`hjsmaster`）。  
-> **分支与同步**：见 [docs/技术方案-分支与上游同步.md](docs/技术方案-分支与上游同步.md)。
+> **本仓库（HouJia/subconverter）已归档。** 请在 **[HouJia/SubConverter-Extended](https://github.com/HouJia/SubConverter-Extended)** 继续迭代（默认分支 **`hjsmaster`**，自建开发 **`hjs-feature`**）。  
+> **分支与同步**：见 Extended 仓库 `docs/技术方案-分支与上游同步.md`。
 
 ### HouJia 相对 Extended 的增量（摘要）
 
