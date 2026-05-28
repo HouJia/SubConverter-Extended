@@ -345,6 +345,8 @@ int addNodes(std::string link, std::vector<Proxy> &allNodes, int groupID,
               node.TLSStr = value;
             else if (key == "sni" || key == "servername")
               node.ServerName = value;
+            else if (key == "network")
+              node.TransferProtocol = value;
             else if (key == "ports" || key == "mport")
               node.Ports = value;
             else if (key == "hop-interval" || key == "hop_interval")
