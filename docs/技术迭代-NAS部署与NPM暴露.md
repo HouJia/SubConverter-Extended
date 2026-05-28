@@ -9,10 +9,14 @@
 ## 目录
 
 - [1. 服务角色](#1-服务角色)
+  - [1.1 NPM `/subapi` 反代（必配）](#11-npm-subapi-反代必配)
+  - [1.2 `/version` 页静态资源（子路径，非内联）](#12-version-页静态资源子路径非内联)
 - [2. NAS 现状（参考）](#2-nas-现状参考)
 - [3. 配置检查](#3-配置检查)
 - [4. 本仓库交付物](#4-本仓库交付物)
 - [5. 部署 / 升级](#5-部署--升级)
+  - [5.1 方式 A：本机 Docker 构建（交叉编译）](#51-方式-a本机-docker-构建交叉编译)
+  - [5.2 方式 B：NAS 上构建（无需本机 Docker）](#52-方式-bnas-上构建无需本机-docker)
 - [6. 验收（subconverter 视角）](#6-验收subconverter-视角)
 - [7. 外部配置与 max_allowed_rulesets](#7-外部配置与-max_allowed_rulesets)
 - [8. 常见现象](#8-常见现象)
@@ -26,29 +30,67 @@ subconverter 提供订阅转换 HTTP API，默认端口 **25500**。
 | 端点 | 用途 |
 |------|------|
 | `GET /version` | Extended 版本信息页（HTML，浏览器访问） |
+| `GET /version/favicon-light.svg` | 版本页 logo / favicon（**独立 HTTP 资源**） |
+| `GET /version/favicon-dark.svg` | 深色主题 favicon |
 | `GET /version.txt` | 纯文本版本（**sub-web 页眉**、脚本健康检查） |
 | `GET /sub?target=...&url=...` | 转换订阅 |
 | `GET /dashboard` | Extended 统计面板（需在 pref 中启用 statistics） |
 
 外网不直接暴露 `25500`，由 NPM 映射为：
 
-- `https://<你的域名>:<HTTPS端口>/subapi/version` → `/version`
-- `https://<你的域名>:<HTTPS端口>/subapi/version.txt` → `/version.txt`
-- `https://<你的域名>:<HTTPS端口>/subapi/sub?...` → `/sub?...`
+- `https://<域名>:<HTTPS端口>/subapi/version` → 容器 `/version`
+- `https://<域名>:<HTTPS端口>/subapi/version/favicon-light.svg` → 容器 `/version/favicon-light.svg`
+- `https://<域名>:<HTTPS端口>/subapi/version.txt` → 容器 `/version.txt`
+- `https://<域名>:<HTTPS端口>/subapi/sub?...` → 容器 `/sub?...`
 
-### 1.1 NPM `/subapi` 与静态资源
+### 1.1 NPM `/subapi` 反代（必配）
 
-Extended 的 `/version` 页引用同路径下的 `favicon-*.svg`（如 `/subapi/version/favicon-light.svg`）。NPM 需将整个 `/subapi/` 前缀剥掉后反代到容器根路径，例如：
+在 **Nginx Proxy Manager** 中为 subconverter 增加 **Custom Location**（或等价 Advanced 配置），**必须**用前缀剥离方式覆盖 **整个** `/subapi/`，不能只配单条 `/subapi/version`。
+
+**Custom Location 示例**（Location = `/subapi/`，Forward = `http://<NAS内网IP>:25500/`）：
 
 ```nginx
+# NPM → Proxy Host → Custom Locations → /subapi/
 location ^~ /subapi/ {
-    proxy_pass http://<NAS_IP>:25500/;
+    proxy_pass http://192.168.0.6:25500/;   # 末尾 / 表示剥掉 /subapi 前缀
+    proxy_http_version 1.1;
     proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-Prefix /subapi;  # 可选，服务端 HTML 亦可按 pathname 推断
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Prefix /subapi;
 }
 ```
 
-**勿**只反代 `/subapi/version` 单条路径而不覆盖 `/subapi/version/favicon-*.svg`，否则版本页图标 404。
+| 检查项 | 正确 | 错误 |
+|--------|------|------|
+| `proxy_pass` 末尾 | 有 `/`（剥前缀） | 无 `/`（路径叠成 `/subapi/sub` 404） |
+| Location 范围 | `^~ /subapi/` 整前缀 | 仅 `/subapi/version` 一条 |
+| 静态资源 | `/subapi/version/favicon-*.svg` 可 200 | 只反代 HTML，图标 404 |
+
+**验收命令**（将域名与端口换成你的）：
+
+```bash
+curl -sI "https://<域名>:<端口>/subapi/version/favicon-light.svg" | head -1
+# 期望 HTTP/2 200 或 HTTP/1.1 200 OK
+
+curl -s "https://<域名>:<端口>/subapi/version.txt"
+# 期望一行纯文本版本
+```
+
+### 1.2 `/version` 页静态资源（子路径，非内联）
+
+版本页 HTML 使用 **Extended 官方子路径**（与 upstream 一致）：
+
+- 页面内：`<img src="/version/favicon-light.svg">`、`<link href="/version/favicon-dark.svg">`
+- 容器内路由：`GET /version/favicon-*.svg` 返回 SVG 文件
+
+经 NPM 访问时，浏览器请求 **`/subapi/version/favicon-light.svg`**。服务端通过以下机制补全前缀：
+
+1. **推荐**：NPM 发送 `X-Forwarded-Prefix: /subapi`，`page_assets::rewriteLocalAssetPaths` 将 HTML 内 `/version/...` 改写为 `/subapi/version/...`
+2. **兜底**：HTML 内 `<base>` 脚本按 `pathname` 推断（如 pathname 以 `/subapi/version` 结尾则 `<base href="/subapi/version/">`）
+
+**不要**使用内联 SVG 替代上述 HTTP 资源；部署与排错以 **NPM + 子路径** 为准。
 
 ## 2. NAS 现状（参考）
 
@@ -58,7 +100,7 @@ location ^~ /subapi/ {
 | 镜像 | `subconverter:nas-amd64`（Extended 根 `Dockerfile` + NAS overlay） |
 | 端口 | `0.0.0.0:25500→25500` |
 | 内网访问 | `http://<NAS内网IP>:25500/` |
-| 部署脚本 | `deploy/nas/deploy-to-qnap.sh` |
+| 部署脚本 | 见 [§5](#5-部署--升级) |
 
 ## 3. 配置检查
 
@@ -81,7 +123,6 @@ max_allowed_rulesets = 256
 |------|------|------|
 | 路径 `/subapi`、`/subapi/sub?`、`/subapi/version.txt` | **固定约定** | NPM 与 sub-web 写死，**不能改** |
 | `https://<你的域名>:<HTTPS端口>` | **部署时必填** | 公网域名 + HTTPS 端口 |
-| 下文整行 URL | **示例** | 联调对照用 |
 
 **sub-web 部署时必须配置真实后端**（见 `sub-web` 仓库 `.env`）：
 
@@ -89,73 +130,97 @@ max_allowed_rulesets = 256
 VITE_SUBCONVERTER_DEFAULT_BACKEND=https://<你的域名>:<HTTPS端口>/subapi
 ```
 
-页眉版本检测：sub-web 请求 **`/subapi/version.txt`**（纯文本），**不再**解析 HTML 版 `/version`（Extended 迁移后 `/version` 为完整网页）。
+页眉版本：sub-web 请求 **`/subapi/version.txt`**（纯文本）。
 
 ## 4. 本仓库交付物
 
 | 项 | 说明 |
 |----|------|
-| 根 `Dockerfile` | Extended 官方多阶段构建（含 Go mihomo bridge） |
-| `deploy/nas/Dockerfile` | 薄 overlay：叠加 `pref.toml`、`config/houjia-template.ini` |
-| `deploy/nas/deploy-to-qnap.sh` | 本机构建 linux/amd64 → save/load → 重建 NAS 容器 |
-| `deploy/docker-compose.nas.example.yml` | 可选编排示例 |
-| `deploy/nas/pref.toml` | NAS 生产偏好（`max_allowed_rulesets=256` 等） |
+| 根 `Dockerfile` | Extended 多阶段构建（Go mihomo bridge + C++） |
+| `deploy/nas/Dockerfile` | 薄 overlay：`pref.toml`、`houjia-template.ini` |
+| `deploy/nas/deploy-to-qnap.sh` | **方式 A**：本机 Docker 构建 → save/load → NAS |
+| `deploy/nas/deploy-build-on-qnap.sh` | **方式 B**：rsync 源码到 NAS，在 NAS 上 docker build |
+| `src/handler/page_assets.h` | NPM 子路径：`X-Forwarded-Prefix` + HTML 资源路径改写 |
 
 ## 5. 部署 / 升级
 
+### 5.1 方式 A：本机 Docker 构建（交叉编译）
+
+**适用**：开发机为 macOS（含 Apple Silicon），需在本地交叉编译 **linux/amd64** 再导入 NAS。
+
+**需要**：本机 **Docker Desktop 已启动**（脚本调用 `docker buildx`）。
+
 ```bash
-# 在 subconverter 仓库根目录（需本机 Docker 可用）
+cd subconverter   # 仓库根
 ./deploy/nas/deploy-to-qnap.sh
 ```
 
-脚本两阶段：① 根 `Dockerfile` → `subconverter-extended-build`；② `deploy/nas/Dockerfile` → `subconverter:nas-amd64`；③ SSH 到 `nas-qnap` 替换容器。
+流程：① 本机 `docker buildx` 两阶段镜像 → ② `docker save | ssh nas docker load` → ③ SSH 重建容器。
 
-更新后确认：
+**为何常用本机 Docker**：QNAP 上完整编译 Extended（Go + C++）耗时长、占内存；在 Mac 上 buildx 交叉编译后只传镜像更稳。
+
+### 5.2 方式 B：NAS 上构建（无需本机 Docker）
+
+**适用**：本机未装 / 未启动 Docker，但 NAS 上 Container Station 正常。
+
+**需要**：本机可 `ssh nas-qnap`，NAS 上 Container Station 的 `docker build` 可用（脚本使用原生 `docker build`，非 buildx，避免 QNAP 权限问题）。
 
 ```bash
-curl -s http://127.0.0.1:25500/version.txt
-curl -s "http://127.0.0.1:25500/sub?target=clash&url=<URLEncode后的订阅链接>" | head
+cd subconverter
+./deploy/nas/deploy-build-on-qnap.sh
+```
+
+流程：① `rsync` 源码到 NAS → ② SSH 在 NAS 上两阶段 `docker build` → ③ 重建容器。
+
+环境变量（可选）：
+
+| 变量 | 默认 | 说明 |
+|------|------|------|
+| `NAS_HOST` | `nas-qnap` | SSH 主机名 |
+| `REMOTE_DIR` | `/share/CACHEDEV1_DATA/Containers/subconverter-build` | NAS 上的构建目录 |
+| `VERSION` | `1.1.9+houjia.2` | 写入镜像的版本字符串 |
+
+### 5.3 升级后自检
+
+```bash
+ssh nas-qnap "curl -s http://127.0.0.1:25500/version.txt"
+ssh nas-qnap "curl -sI http://127.0.0.1:25500/version/favicon-light.svg | head -1"
 ```
 
 ## 6. 验收（subconverter 视角）
 
-- [ ] 内网 `25500/version.txt` 返回纯文本版本行
-- [ ] 内网 `/sub?` + 真实 `url` 返回订阅内容
-- [ ] 经 NPM `/subapi/version.txt`、`/subapi/sub?` 与内网一致
-- [ ] 经 NPM `/subapi/version` 页面图标正常（非破损图）
-- [ ] 无需开放公网 25500 端口
+- [ ] 内网 `25500/version.txt` 返回纯文本版本行（含构建 hash）
+- [ ] 内网 `/version/favicon-light.svg` 返回 SVG
+- [ ] 经 NPM `/subapi/version` 页面 logo 与 favicon 正常
+- [ ] 经 NPM `/subapi/version/favicon-light.svg` 返回 200
+- [ ] 经 NPM `/subapi/sub?` + 真实 `url` 可转换
+- [ ] 公网不直接暴露 25500
 
 ## 7. 外部配置与 max_allowed_rulesets
 
-上游默认 **`max_allowed_rulesets = 64`**。自建 NAS 镜像使用 **256**（`src/handler/settings.h` 编译默认 + `deploy/nas/pref.toml`）。
-
-| 情况 | 表现 |
-|------|------|
-| 外部 INI 规则集 **> max_allowed_rulesets** | 整份 `config=` 不生效 |
-| **`config=` 指向 GitHub raw 且 NAS 拉取失败** | 回退默认策略组 |
-| 自建 NAS | `default_external_config = "config/houjia-template.ini"`（镜像内路径） |
+上游默认 **`max_allowed_rulesets = 64`**。自建 NAS 镜像使用 **256**（`settings.h` + `deploy/nas/pref.toml`）。
 
 ## 8. 常见现象
 
 | 现象 | 说明 |
 |------|------|
-| `No nodes were found!` | API 已通；`url` 无效或无法拉取节点 |
-| `/subapi/version` 图标破损 | 浏览器请求了 `/version/favicon-*.svg`（缺 `/subapi` 前缀）；检查 NPM 是否覆盖 `/subapi/` 全路径；升级含 favicon 修复的镜像 |
-| sub-web 页眉铺满 HTML 源码 | 误用 `/version`（HTML）作版本 API；sub-web 应改用 `/version.txt` |
-| `/subc` | NPM 301 到 `/subapi` |
+| `deploy-to-qnap.sh` 报 `docker.sock` 不存在 | 本机 Docker 未启动；改用 [§5.2](#52-方式-bnas-上构建无需本机-docker) |
+| `/subapi/version` 图标破损 | NPM 未配整段 `/subapi/` 或未发 `X-Forwarded-Prefix`；见 [§1.1](#11-npm-subapi-反代必配) |
+| sub-web 页眉 HTML 乱码 | 误请求 `/version`；应使用 `/version.txt` |
+| `No nodes were found!` | API 已通；订阅 `url` 无效或拉取失败 |
 
 ## 9. 跨项目依赖
 
-| 项目 | 分支（建议） |
-|------|----------------|
-| subconverter | **`hjsmaster`**（交付主分支） |
-| nginx-proxy-manager | `feature/nas-qnap-phase1-proxy` |
-| sub-web | `feature/npm-subpath-subw` |
+| 项目 | 分支 |
+|------|------|
+| subconverter | **`hjsmaster`** |
+| sub-web | **`hjsmaster`** |
+| nginx-proxy-manager | `feature/nas-qnap-phase1-proxy`（或你的 NPM 配置分支） |
 
 ## 10. 变更记录
 
 | 日期 | 说明 |
 |------|------|
 | 2026-05-16 | 初版：NAS + NPM `/subapi` |
-| 2026-05-16 | §7：`max_allowed_rulesets` 与 `deploy/nas/pref.toml` |
-| 2026-05-28 | Extended 基线、两阶段 Docker、`/version.txt`、sub-web 版本 API、NPM favicon 说明 |
+| 2026-05-28 | Extended 基线、两阶段 Docker、`/version.txt` |
+| 2026-05-28 | 版本页改回 **子路径 favicon** + NPM 部署指南；新增 NAS 本机构建脚本 |

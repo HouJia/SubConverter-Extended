@@ -35,6 +35,13 @@ inline std::string rewriteLocalAssetPaths(std::string html,
     return html;
   html = replaceAllDistinct(std::move(html), localPath + "/favicon",
                             base + "/favicon");
+  html = replaceAllDistinct(std::move(html),
+                            "srcset=\"" + localPath + "/",
+                            "srcset=\"" + base + "/");
+  html = replaceAllDistinct(std::move(html), "src=\"" + localPath + "/",
+                            "src=\"" + base + "/");
+  html = replaceAllDistinct(std::move(html), "href=\"" + localPath + "/",
+                            "href=\"" + base + "/");
   html = replaceAllDistinct(std::move(html), "href=\"" + localPath + "\"",
                             "href=\"" + base + "\"");
   return html;

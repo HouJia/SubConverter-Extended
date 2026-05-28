@@ -144,9 +144,9 @@ std::string page(Request &request, Response &response) {
             document.documentElement.lang = detectPreferredLanguage();
         })();
     </script>
-    <link rel="icon" type="image/svg+xml" href="favicon-dark.svg">
-    <link rel="icon" type="image/svg+xml" href="favicon-light.svg" media="(prefers-color-scheme: light)">
-    <link rel="icon" type="image/svg+xml" href="favicon-dark.svg" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/svg+xml" href="/version/favicon-dark.svg">
+    <link rel="icon" type="image/svg+xml" href="/version/favicon-light.svg" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/svg+xml" href="/version/favicon-dark.svg" media="(prefers-color-scheme: dark)">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -381,8 +381,7 @@ std::string page(Request &request, Response &response) {
             transition: transform 0.28s ease, filter 0.28s ease;
         }
 
-        .brand-mark img,
-        .brand-mark svg {
+        .brand-mark img {
             display: block;
             width: 100%;
             height: 100%;
@@ -704,7 +703,10 @@ std::string page(Request &request, Response &response) {
     </button>
     <div class="container">
         <header>
-            <div class="brand-mark" aria-hidden="true">)html" + std::string(VERSION_FAVICON_LIGHT) + R"html(</div>
+            <picture class="brand-mark">
+                <source media="(prefers-color-scheme: dark)" srcset="/version/favicon-dark.svg">
+                <img src="/version/favicon-light.svg" alt="SubConverter-Extended icon" width="96" height="96" decoding="async">
+            </picture>
             <div class="status-pill" aria-live="polite">
                 <span class="status-dot" aria-hidden="true"></span>
                 <span data-lang="en">Service Online</span>

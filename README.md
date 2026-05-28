@@ -28,7 +28,7 @@
 |------|------|
 | 上游补缺 | MetaCubeX `?ua=`；sing-box Hysteria2 `server_ports` + `hop_interval` |
 | NAS | `deploy/nas/*` 两阶段 Docker overlay、`max_allowed_rulesets=256` |
-| NPM | `/version.txt`、HTML 版 `/version` 内联 SVG + `<base>` 子路径适配 |
+| NPM | `/version.txt`、HTML `/version` **子路径 favicon**（`/subapi/version/favicon-*.svg`）+ `page_assets` 前缀改写 |
 | 备份 | 旧 tindy 集成主线见分支 `hjsmaster-blk` |
 
 下文主体说明仍基于 **SubConverter-Extended** 功能；若与上表冲突，以 **`hjsmaster` 代码与 `docs/`** 为准。

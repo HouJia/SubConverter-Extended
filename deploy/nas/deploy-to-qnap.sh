@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
-# 在本机（Mac/Linux）构建 linux/amd64 镜像并导入 nas-qnap，替换 subconverter 容器
+# 构建 linux/amd64 镜像并导入 nas-qnap，替换 subconverter 容器
+#
+# 两种方式（二选一）：
+#   A) 本脚本（默认）— 在本机 Docker 交叉构建后 save/load 到 NAS
+#      需要：本机 Docker Desktop 已启动
+#   B) deploy-build-on-qnap.sh — 在 NAS 上 rsync 源码并构建
+#      需要：NAS Container Station 可用，无需本机 Docker
+#
+# 用法：./deploy/nas/deploy-to-qnap.sh
+#       ./deploy/nas/deploy-build-on-qnap.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 IMAGE="${IMAGE:-subconverter:nas-amd64}"
