@@ -345,10 +345,10 @@ int addNodes(std::string link, std::vector<Proxy> &allNodes, int groupID,
               node.TLSStr = value;
             else if (key == "sni" || key == "servername")
               node.ServerName = value;
-            else if (key == "network")
-              node.TransferProtocol = value;
-            // Store everything else in a raw format for mihomo-compatible
-            // output
+            else if (key == "ports" || key == "mport")
+              node.Ports = value;
+            else if (key == "hop-interval" || key == "hop_interval")
+              node.HopInterval = to_int(value);
           }
 
           nodes.push_back(node);

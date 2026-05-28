@@ -16,6 +16,23 @@
 
 <h3>⚡ 现代化的订阅转换后端 | 深度适配 Mihomo 内核 ⚡</h3>
 
+> [!IMPORTANT]
+> **本仓库为 HouJia 维护 fork**（默认分支 **`hjsmaster`**），在 [SubConverter-Extended](https://github.com/Aethersailor/SubConverter-Extended) 基线上叠加 NAS 部署、tindy/MetaCubeX 能力补缺与自建配置。  
+> **版本号**：SemVer 构建元数据 `1.1.9+houjia.N`（基于 Extended v1.1.9 release  lineage，代码跟踪 Extended master）。  
+> **配套前端**：[HouJia/sub-web](https://github.com/HouJia/sub-web)（`hjsmaster`）。  
+> **分支与同步**：见 [docs/技术方案-分支与上游同步.md](docs/技术方案-分支与上游同步.md)。
+
+### HouJia 相对 Extended 的增量（摘要）
+
+| 类别 | 内容 |
+|------|------|
+| 上游补缺 | MetaCubeX `?ua=`；sing-box Hysteria2 `server_ports` + `hop_interval` |
+| NAS | `deploy/nas/*` 两阶段 Docker overlay、`max_allowed_rulesets=256` |
+| NPM | `/version.txt`、HTML 版 `/version` 内联 SVG + `<base>` 子路径适配 |
+| 备份 | 旧 tindy 集成主线见分支 `hjsmaster-blk` |
+
+下文主体说明仍基于 **SubConverter-Extended** 功能；若与上表冲突，以 **`hjsmaster` 代码与 `docs/`** 为准。
+
 <p align="center">
   <a href="#-项目简介">项目简介</a> •
   <a href="#-立项原因">立项原因</a> •

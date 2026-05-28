@@ -287,6 +287,7 @@ void hysteria2Construct(Proxy &node, const std::string &group, const std::string
                         const std::string &up, const std::string &down, const std::string &alpn,
                         const std::string &obfsParam, const std::string &obfsPassword, const std::string &sni,
                         const std::string &publicKey, const std::string &ports,
+                        const std::string &hop_interval,
                         tribool udp, tribool tfo,
                         tribool scv, const std::string &underlying_proxy) {
     commonConstruct(node, ProxyType::Hysteria2, group, remarks, add, port, udp, tfo, scv, tribool(), underlying_proxy);
@@ -300,6 +301,7 @@ void hysteria2Construct(Proxy &node, const std::string &group, const std::string
     node.ServerName = sni;
     node.PublicKey = publicKey;
     node.Ports = ports;
+    node.HopInterval = to_int(hop_interval);
 }
 
 void tuicConstruct(Proxy &node, const std::string &group, const std::string &remarks, const std::string &add,
@@ -1189,7 +1191,7 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
         std::string flow, mode; //trojan
         std::string user; //socks
         std::string ip, ipv6, private_key, public_key, mtu; //wireguard
-        std::string auth, up, down, obfsParam, insecure, alpn; //hysteria
+        std::string auth, up, down, obfsParam, insecure, alpn, hop_interval; //hysteria
         std::string obfsPassword; //hysteria2
         std::string congestion_control, udp_relay_mode, token; // tuic
         string_array dns_server;
@@ -1531,9 +1533,10 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
                 singleproxy["sni"] >>= host;
                 singleproxy["alpn"][0] >>= alpn;
                 singleproxy["ports"] >> ports;
+                singleproxy["hop-interval"] >>= hop_interval;
                 sni = host;
                 hysteria2Construct(node, group, ps, server, port, password, host, up, down, alpn, obfsParam,
-                                   obfsPassword, sni, public_key, ports, udp, tfo, scv);
+                                   obfsPassword, sni, public_key, ports, hop_interval, udp, tfo, scv);
                 break;
             case "tuic"_hash:
                 group = TUIC_DEFAULT_GROUP;
@@ -1731,7 +1734,7 @@ void explodeStdMieru(std::string mieru, Proxy &node) {
 }
 
 void explodeStdHysteria2(std::string hysteria2, Proxy &node) {
-    std::string add, port, password, host, insecure, up, down, alpn, obfsParam, obfsPassword, remarks, sni, ports;
+    std::string add, port, password, host, insecure, up, down, alpn, obfsParam, obfsPassword, remarks, sni, ports, hop_interval;
     std::string addition;
     tribool scv;
     hysteria2 = hysteria2.substr(12);
@@ -1773,11 +1776,14 @@ void explodeStdHysteria2(std::string hysteria2, Proxy &node) {
     host = getUrlArg(addition, "sni");
     sni = getUrlArg(addition, "sni");
     ports = getUrlArg(addition, "ports");
+    hop_interval = getUrlArg(addition, "hop-interval");
+    if (hop_interval.empty())
+        hop_interval = getUrlArg(addition, "hop_interval");
     if (remarks.empty())
         remarks = add + ":" + port;
 
     hysteria2Construct(node, HYSTERIA2_DEFAULT_GROUP, remarks, add, port, password, host, up, down, alpn, obfsParam,
-                       obfsPassword, host, "", ports, tribool(), tribool(), scv);
+                       obfsPassword, host, "", ports, hop_interval, tribool(), tribool(), scv);
     return;
 }
 
@@ -2897,7 +2903,7 @@ void explodeSingbox(rapidjson::Value &outbounds, std::vector<Proxy> &nodes) {
             std::string flow, mode; //trojan
             std::string user; //socks
             std::string ip, ipv6, private_key, public_key, mtu; //wireguard
-            std::string auth, up, down, obfsParam, insecure, alpn; //hysteria
+            std::string auth, up, down, obfsParam, insecure, alpn, hop_interval; //hysteria
             std::string obfsPassword; //hysteria2
             string_array dns_server;
             std::string fingerprint;
@@ -3093,8 +3099,10 @@ void explodeSingbox(rapidjson::Value &outbounds, std::vector<Proxy> &nodes) {
                             obfsParam = GetMember(obfsOpt, "type");
                             obfsPassword = GetMember(obfsOpt, "password");
                         }
+                        ports = GetMember(singboxNode, "server_ports");
+                        hop_interval = GetMember(singboxNode, "hop_interval");
                         hysteria2Construct(node, group, ps, server, port, password, host, up, down, alpn, obfsParam,
-                                           obfsPassword, sni, public_key, "", udp, tfo, scv);
+                                           obfsPassword, sni, public_key, ports, hop_interval, udp, tfo, scv);
                         break;
                     case "tuic"_hash:
                         group = TUIC_DEFAULT_GROUP;

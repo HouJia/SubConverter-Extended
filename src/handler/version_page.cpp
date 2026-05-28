@@ -82,8 +82,8 @@ std::string buildCommitLink(const std::string &build_id) {
   if (build_id.empty())
     return "";
   return "<a "
-         "href=\"https://github.com/Aethersailor/"
-         "SubConverter-Extended/commit/" +
+         "href=\"https://github.com/HouJia/"
+         "subconverter/commit/" +
          build_id + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
          build_id + "</a>";
 }

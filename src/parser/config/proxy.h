@@ -121,6 +121,7 @@ struct Proxy {
   String TestUrl;
   String ClientId;
   String Ports;
+  uint32_t HopInterval = 0;
   String Auth;
   String Alpn;
   String UpMbps;

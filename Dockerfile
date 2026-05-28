@@ -141,9 +141,9 @@ RUN set -xe && \
     fi
 
 RUN set -xe && \
-    [ -n "${SHA}" ] && sed -i "s/#define BUILD_ID \"\"/#define BUILD_ID \"${SHA}\"/ " src/version.h || true && \
-    [ -n "${VERSION}" ] && sed -i "s/#define VERSION \"dev\"/#define VERSION \"${VERSION}\"/" src/version.h || true && \
-    [ -n "${BUILD_DATE}" ] && sed -i "s/#define BUILD_DATE \"\"/#define BUILD_DATE \"${BUILD_DATE}\"/" src/version.h || true && \
+    [ -n "${SHA}" ] && sed -i "s|#define BUILD_ID \"[^\"]*\"|#define BUILD_ID \"${SHA}\"|" src/version.h || true && \
+    [ -n "${VERSION}" ] && sed -i "s|#define VERSION \"[^\"]*\"|#define VERSION \"${VERSION}\"|" src/version.h || true && \
+    [ -n "${BUILD_DATE}" ] && sed -i "s|#define BUILD_DATE \"[^\"]*\"|#define BUILD_DATE \"${BUILD_DATE}\"|" src/version.h || true && \
     mkdir -p bridge && \
     cp /usr/lib/libmihomo.so bridge/ && \
     cp /usr/include/libmihomo.h bridge/ && \

@@ -3156,6 +3156,17 @@ vectorToJsonArray(const std::vector<std::string> &array,
   return result;
 }
 
+static Integer resolveHopIntervalSeconds(const Proxy &x) {
+  if (x.HopInterval > 0)
+    return x.HopInterval;
+  for (const char *key : {"hop-interval", "hop_interval"}) {
+    auto it = x.RawParams.find(key);
+    if (it != x.RawParams.end() && !it->second.empty())
+      return to_int(it->second);
+  }
+  return 0;
+}
+
 static rapidjson::Value buildSingBoxHysteria2ServerPorts(const std::string &ports, rapidjson::MemoryPoolAllocator<> &allocator)
 {
     rapidjson::Value result(rapidjson::kArrayType);
@@ -3504,6 +3515,12 @@ void proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json,
       if (!x.Ports.empty()) {
         proxy.AddMember("server_ports",
                         buildSingBoxHysteria2ServerPorts(x.Ports, allocator),
+                        allocator);
+      }
+      if (const Integer hop_interval = resolveHopIntervalSeconds(x); hop_interval > 0) {
+        proxy.AddMember("hop_interval",
+                        rapidjson::Value(formatSingBoxInterval(hop_interval).c_str(),
+                                         allocator),
                         allocator);
       }
       break;
