@@ -178,7 +178,7 @@ cd subconverter
 |------|------|------|
 | `NAS_HOST` | `nas-qnap` | SSH 主机名 |
 | `REMOTE_DIR` | `/share/CACHEDEV1_DATA/Containers/subconverter-build` | NAS 上的构建目录 |
-| `VERSION` | `1.1.9+houjia.2` | 写入镜像的版本字符串 |
+| `VERSION` | `1.1.18+houjia.1` | 写入镜像的版本字符串（主版本对齐 upstream release） |
 
 ### 5.3 升级后自检
 

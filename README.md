@@ -20,7 +20,7 @@
 > **HouJia 交付仓（本 fork）**  
 > - **默认分支**：`hjsmaster`（NAS 构建与集成）  
 > - **自建开发**：`hjs-feature`（HouJia 增强 → merge 进 `hjsmaster`）  
-> - **版本号**：`1.1.9+houjia.N`（SemVer 构建元数据，区别于 Aethersailor 官方 release）  
+> - **版本号**：`1.1.18+houjia.N`（对齐 [Aethersailor release](https://github.com/Aethersailor/SubConverter-Extended/releases)；`+houjia` 为 HouJia 构建元数据）  
 > - **分支模型**：[docs/技术方案-分支与上游同步.md](docs/技术方案-分支与上游同步.md)  
 > - **NAS 部署**：[docs/技术迭代-NAS部署与NPM暴露.md](docs/技术迭代-NAS部署与NPM暴露.md)  
 > - **配套前端**：[HouJia/sub-web](https://github.com/HouJia/sub-web)（`hjsmaster`）  
