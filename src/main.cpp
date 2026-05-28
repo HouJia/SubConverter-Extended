@@ -201,6 +201,8 @@ int main(int argc, char *argv[]) {
 
   webServer.append_response("GET", "/version", "text/html; charset=utf-8",
                             version_page::page);
+  webServer.append_response("GET", "/version.txt", "text/plain; charset=utf-8",
+                            version_page::plainText);
   webServer.append_response("GET", "/inspect", "text/html; charset=utf-8",
                             inspect_page::page);
   if (global.statisticsEnabled) {

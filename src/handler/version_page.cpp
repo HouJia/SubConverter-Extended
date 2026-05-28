@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "handler/page_assets.h"
 #include "version.h"
 
 namespace {
@@ -101,7 +102,11 @@ std::string faviconLight(Request &, Response &response) {
   return VERSION_FAVICON_LIGHT;
 }
 
-std::string page(Request &, Response &response) {
+std::string plainText(Request &, Response &) {
+  return std::string("SubConverter-Extended ") + VERSION + " backend\n";
+}
+
+std::string page(Request &request, Response &response) {
   response.headers["X-Robots-Tag"] =
       "noindex, nofollow, noarchive, nosnippet, noimageindex";
   std::string build_id = BUILD_ID;
@@ -113,9 +118,12 @@ std::string page(Request &, Response &response) {
           : build_date_display;
   std::string commit_link = buildCommitLink(build_id);
 
-  return R"html(<!DOCTYPE html>
+  std::string html = std::string(R"html(<!DOCTYPE html>
 <html lang="en">
 <head>
+)html") +
+                     page_assets::BASE_TAG_SCRIPT +
+                     R"html(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
@@ -136,9 +144,9 @@ std::string page(Request &, Response &response) {
             document.documentElement.lang = detectPreferredLanguage();
         })();
     </script>
-    <link rel="icon" type="image/svg+xml" href="/version/favicon-dark.svg">
-    <link rel="icon" type="image/svg+xml" href="/version/favicon-light.svg" media="(prefers-color-scheme: light)">
-    <link rel="icon" type="image/svg+xml" href="/version/favicon-dark.svg" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/svg+xml" href="favicon-dark.svg">
+    <link rel="icon" type="image/svg+xml" href="favicon-light.svg" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/svg+xml" href="favicon-dark.svg" media="(prefers-color-scheme: dark)">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -373,7 +381,8 @@ std::string page(Request &, Response &response) {
             transition: transform 0.28s ease, filter 0.28s ease;
         }
 
-        .brand-mark img {
+        .brand-mark img,
+        .brand-mark svg {
             display: block;
             width: 100%;
             height: 100%;
@@ -695,10 +704,7 @@ std::string page(Request &, Response &response) {
     </button>
     <div class="container">
         <header>
-            <picture class="brand-mark">
-                <source media="(prefers-color-scheme: dark)" srcset="/version/favicon-dark.svg">
-                <img src="/version/favicon-light.svg" alt="SubConverter-Extended icon" width="96" height="96" decoding="async">
-            </picture>
+            <div class="brand-mark" aria-hidden="true">)html" + std::string(VERSION_FAVICON_LIGHT) + R"html(</div>
             <div class="status-pill" aria-live="polite">
                 <span class="status-dot" aria-hidden="true"></span>
                 <span data-lang="en">Service Online</span>
@@ -826,6 +832,8 @@ std::string page(Request &, Response &response) {
     </script>
 </body>
 </html>)html";
+  return page_assets::rewriteLocalAssetPaths(std::move(html), request,
+                                             "/version");
 }
 
 } // namespace version_page

@@ -9,6 +9,7 @@ namespace version_page {
 
 std::string faviconDark(Request &, Response &response);
 std::string faviconLight(Request &, Response &response);
+std::string plainText(Request &, Response &response);
 std::string page(Request &, Response &response);
 
 } // namespace version_page

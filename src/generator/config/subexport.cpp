@@ -3501,6 +3501,11 @@ void proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json,
         }
         proxy.AddMember("obfs", obfs, allocator);
       }
+      if (!x.Ports.empty()) {
+        proxy.AddMember("server_ports",
+                        buildSingBoxHysteria2ServerPorts(x.Ports, allocator),
+                        allocator);
+      }
       break;
     }
     case ProxyType::TUIC: {
