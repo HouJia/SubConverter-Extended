@@ -18,7 +18,7 @@ DOCKER_REMOTE="${DOCKER_REMOTE:-/share/CACHEDEV1_DATA/.qpkg/container-station/bi
 CONTAINER="${CONTAINER:-subconverter}"
 PORT="${PORT:-25500}"
 # Extended 最近 release 为 v1.1.9；主线基于其 master（较 tag 更新）。fork 版本用 SemVer 构建元数据 +houjia.N
-VERSION="${VERSION:-1.1.9+houjia.2}"
+VERSION="${VERSION:-1.1.9+houjia.3}"
 BUILD_SHA="${BUILD_SHA:-$(git rev-parse --short HEAD)}"
 BUILD_DATE="${BUILD_DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
 
