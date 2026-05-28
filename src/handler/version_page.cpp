@@ -83,7 +83,7 @@ std::string buildCommitLink(const std::string &build_id) {
     return "";
   return "<a "
          "href=\"https://github.com/HouJia/"
-         "subconverter/commit/" +
+         "SubConverter-Extended/commit/" +
          build_id + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
          build_id + "</a>";
 }
