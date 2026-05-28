@@ -20,9 +20,9 @@ rsync -az --delete \
   --exclude '.git' --exclude 'subapi-*.png' --exclude 'subw-*.png' --exclude '.DS_Store' \
   "$ROOT/" "$NAS_HOST:$REMOTE_DIR/"
 
-echo "==> build on NAS (native linux/amd64)"
+echo "==> build on NAS (native linux/amd64, DOCKER_BUILDKIT=0 规避 QNAP buildx 目录权限)"
 ssh -o BatchMode=yes "$NAS_HOST" "cd '$REMOTE_DIR' && \
-  $DOCKER_REMOTE build -f Dockerfile \
+  DOCKER_BUILDKIT=0 $DOCKER_REMOTE build -f Dockerfile \
     --build-arg VERSION='$VERSION' \
     --build-arg SHA='$BUILD_SHA' \
     --build-arg BUILD_DATE='$BUILD_DATE' \
