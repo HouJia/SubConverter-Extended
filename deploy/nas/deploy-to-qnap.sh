@@ -19,7 +19,7 @@ CONTAINER="${CONTAINER:-subconverter}"
 PORT="${PORT:-25500}"
 # 上游 Aethersailor release 见 https://github.com/Aethersailor/SubConverter-Extended/releases（当前 v1.1.18）。
 # HouJia fork：`<上游版本>+houjia.N`（SemVer 构建元数据）；merge 到新 upstream release 时 bump 主版本并重置或递增 N。
-VERSION="${VERSION:-1.1.18+houjia.5}"
+VERSION="${VERSION:-1.1.18+houjia.6}"
 BUILD_SHA="${BUILD_SHA:-$(git rev-parse --short HEAD)}"
 BUILD_DATE="${BUILD_DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
 

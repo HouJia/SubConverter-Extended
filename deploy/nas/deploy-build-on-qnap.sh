@@ -10,7 +10,7 @@ IMAGE="${IMAGE:-subconverter:nas-amd64}"
 BASE_IMAGE="${BASE_IMAGE:-subconverter-extended-build}"
 CONTAINER="${CONTAINER:-subconverter}"
 PORT="${PORT:-25500}"
-VERSION="${VERSION:-1.1.18+houjia.5}"
+VERSION="${VERSION:-1.1.18+houjia.6}"
 BUILD_SHA="${BUILD_SHA:-$(git -C "$ROOT" rev-parse --short HEAD)}"
 BUILD_DATE="${BUILD_DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
 
