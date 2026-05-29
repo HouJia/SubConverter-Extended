@@ -316,6 +316,25 @@ target = "/sub?target=trojan"
 uri = "/test"
 target = "/render?path=templates/test.tpl"
 
+[statistics]
+# 运行时统计与 /dashboard；内网默认开启、无密码（公网暴露时请开 dashboard_auth）
+enabled = true
+data_dir = "stats"
+flush_interval = 5
+
+[statistics.geo]
+provider = "header"
+country_headers = ["CF-IPCountry", "X-Geo-Country", "X-Vercel-IP-Country", "CloudFront-Viewer-Country"]
+
+[statistics.dashboard_auth]
+# false = 直接打开 /dashboard；true = HTTP Basic（同官方 demo）
+enabled = false
+username = ""
+password = ""
+max_failures = 5
+window_seconds = 300
+lock_seconds = 900
+
 #[[tasks]]
 #name = "tick"
 #cronexp = "0/10 * * * * ?"

@@ -164,7 +164,7 @@ VITE_SUBCONVERTER_DEFAULT_BACKEND=https://<你的域名>:<HTTPS端口>/subapi
 **需要**：本机 **Docker Desktop 已启动**（脚本调用 `docker buildx`）。
 
 ```bash
-cd subconverter   # 仓库根
+cd SubConverter-Extended   # 仓库根
 ./deploy/nas/deploy-to-qnap.sh
 ```
 
@@ -179,7 +179,7 @@ cd subconverter   # 仓库根
 **需要**：本机可 `ssh nas-qnap`，NAS 上 Container Station 的 `docker build` 可用（脚本使用原生 `docker build`，非 buildx，避免 QNAP 权限问题）。
 
 ```bash
-cd subconverter
+cd SubConverter-Extended
 ./deploy/nas/deploy-build-on-qnap.sh
 ```
 
@@ -219,7 +219,7 @@ ssh nas-qnap "curl -sI http://127.0.0.1:25500/version/favicon-light.svg | head -
 |------|------|
 | `deploy-to-qnap.sh` 报 `docker.sock` 不存在 | 本机 Docker 未启动；改用 [§5.2](#52-方式-bnas-上构建无需本机-docker) |
 | `/subapi/` 404 | 仅配了 `location = /subapi` 反代，未处理带尾斜杠；应 **301** 到 `/subapi/version` |
-| `/dashboard` 404 | 正常：NAS 默认未开 `statistics.enabled` |
+| `/dashboard` 404 | `pref.toml` 未设 `[statistics] enabled = true`；见 [功能与访问入口.md](功能与访问入口.md) §3.4 |
 | `/inspect` 图标裂 | favicon 只在 `/version/favicon-*`；inspect 页须用 `../version/favicon-*` |
 | sub-web 页眉 HTML 乱码 | 误请求 `/version`；应使用 `/version.txt` |
 | `No nodes were found!` | API 已通；订阅 `url` 无效或拉取失败 |
@@ -228,7 +228,7 @@ ssh nas-qnap "curl -sI http://127.0.0.1:25500/version/favicon-light.svg | head -
 
 | 项目 | 分支 |
 |------|------|
-| subconverter | **`hjsmaster`** |
+| SubConverter-Extended | **`hjsmaster`** |
 | sub-web | **`hjsmaster`** |
 | nginx-proxy-manager | `feature/nas-qnap-phase1-proxy`（或你的 NPM 配置分支） |
 
@@ -238,4 +238,4 @@ ssh nas-qnap "curl -sI http://127.0.0.1:25500/version/favicon-light.svg | head -
 |------|------|
 | 2026-05-16 | 初版：NAS + NPM `/subapi` |
 | 2026-05-28 | Extended 基线、两阶段 Docker、`/version.txt` |
-| 2026-05-29 | 版本页 favicon 改相对路径 + `<base>`；NPM `/subapi` 补 `X-Forwarded-Prefix` |
+| 2026-05-29 | 启用 NAS `statistics`；新增 [功能与访问入口.md](功能与访问入口.md) |

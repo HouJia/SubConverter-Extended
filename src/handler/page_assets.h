@@ -16,7 +16,9 @@ inline std::string headerValue(const Request &request, const std::string &name) 
   return {};
 }
 
-// NPM /subapi 反代时可通过 X-Forwarded-Prefix 显式指定；否则 HTML 内脚本按 pathname 推断。
+// Favicon HTTP 路由仅在 /version/favicon-*.svg；各 HTML 页引用方式见 docs/功能与访问入口.md §4
+inline constexpr const char *FAVICON_REL_VERSION = "favicon-light.svg";
+inline constexpr const char *FAVICON_REL_FROM_SIBLING_PAGE = "../version/favicon-light.svg";
 inline std::string resolvePublicBase(const Request &request,
                                      const std::string &localPath) {
   std::string prefix = headerValue(request, "X-Forwarded-Prefix");

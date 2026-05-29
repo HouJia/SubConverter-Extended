@@ -22,7 +22,8 @@
 > - **自建开发**：`hjs-feature`（HouJia 增强 → merge 进 `hjsmaster`）  
 > - **版本号**：`1.1.18+houjia.N`（对齐 [Aethersailor release](https://github.com/Aethersailor/SubConverter-Extended/releases)；`+houjia` 为 HouJia 构建元数据）  
 > - **分支模型**：[docs/技术方案-分支与上游同步.md](docs/技术方案-分支与上游同步.md)  
-> - **NAS 部署**：[docs/技术迭代-NAS部署与NPM暴露.md](docs/技术迭代-NAS部署与NPM暴露.md)  
+> **NAS 部署**：[docs/技术迭代-NAS部署与NPM暴露.md](docs/技术迭代-NAS部署与NPM暴露.md)  
+> - **功能与访问**：[docs/功能与访问入口.md](docs/功能与访问入口.md)  
 > - **配套前端**：[HouJia/sub-web](https://github.com/HouJia/sub-web)（`hjsmaster`）  
 > 原 [HouJia/subconverter](https://github.com/HouJia/subconverter) 已归档，请在本仓库迭代。
 
