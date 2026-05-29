@@ -80,17 +80,23 @@ curl -s "https://<域名>:<端口>/subapi/version.txt"
 
 ### 1.2 `/version` 页静态资源（子路径，非内联）
 
-版本页 HTML 使用 **Extended 官方子路径**（与 upstream 一致）：
+版本页 HTML 使用 **相对路径** favicon（与 upstream Extended 子路径路由一致，不经内联 SVG）：
 
-- 页面内：`<img src="/version/favicon-light.svg">`、`<link href="/version/favicon-dark.svg">`
+- 页面内：`<img src="favicon-light.svg">`、`<link href="favicon-dark.svg">`（**相对**，非 `/version/...` 绝对路径）
 - 容器内路由：`GET /version/favicon-*.svg` 返回 SVG 文件
+- `<head>` 内 `BASE_TAG_SCRIPT` 按浏览器 `pathname` 注入 `<base href="...">`：
+  - 内网 `http://<NAS>:25500/version` → base `/version/` → 请求 `/version/favicon-light.svg`
+  - NPM `https://<域名>/subapi/version` → base `/subapi/version/` → 请求 `/subapi/version/favicon-light.svg`
+  - NPM `https://<域名>/subapi`（反代到后端 `/version`）→ base `/subapi/version/` → 同上
 
-经 NPM 访问时，浏览器请求 **`/subapi/version/favicon-light.svg`**。服务端通过以下机制补全前缀：
+**为何不用绝对路径 `/version/favicon-*.svg`？** 绝对路径不受 `<base>` 影响；经 NPM 时浏览器会请求 `https://<域名>/version/...`（缺 `/subapi` 前缀）→ **404 图标破损**。
 
-1. **推荐**：NPM 发送 `X-Forwarded-Prefix: /subapi`，`page_assets::rewriteLocalAssetPaths` 将 HTML 内 `/version/...` 改写为 `/subapi/version/...`
-2. **兜底**：HTML 内 `<base>` 脚本按 `pathname` 推断（如 pathname 以 `/subapi/version` 结尾则 `<base href="/subapi/version/">`）
+**双保险（推荐同时配置）**：
 
-**不要**使用内联 SVG 替代上述 HTTP 资源；部署与排错以 **NPM + 子路径** 为准。
+1. **服务端**：NPM 发送 `X-Forwarded-Prefix: /subapi`，`page_assets::rewriteLocalAssetPaths` 可将遗留绝对路径改写为 `/subapi/version/...`
+2. **客户端**：相对路径 + `<base>`（不依赖 NPM 自定义头，主路径）
+
+**不要**使用内联 SVG 替代上述 HTTP 资源。
 
 ## 2. NAS 现状（参考）
 
@@ -205,7 +211,7 @@ ssh nas-qnap "curl -sI http://127.0.0.1:25500/version/favicon-light.svg | head -
 | 现象 | 说明 |
 |------|------|
 | `deploy-to-qnap.sh` 报 `docker.sock` 不存在 | 本机 Docker 未启动；改用 [§5.2](#52-方式-bnas-上构建无需本机-docker) |
-| `/subapi/version` 图标破损 | NPM 未配整段 `/subapi/` 或未发 `X-Forwarded-Prefix`；见 [§1.1](#11-npm-subapi-反代必配) |
+| `/subapi/version` 图标破损 | HTML 用了绝对路径 `/version/favicon-*`（不受 `<base>` 影响）；或 NPM 未配整段 `/subapi/`；见 [§1.2](#12-version-页静态资源子路径非内联) |
 | sub-web 页眉 HTML 乱码 | 误请求 `/version`；应使用 `/version.txt` |
 | `No nodes were found!` | API 已通；订阅 `url` 无效或拉取失败 |
 
@@ -223,4 +229,4 @@ ssh nas-qnap "curl -sI http://127.0.0.1:25500/version/favicon-light.svg | head -
 |------|------|
 | 2026-05-16 | 初版：NAS + NPM `/subapi` |
 | 2026-05-28 | Extended 基线、两阶段 Docker、`/version.txt` |
-| 2026-05-28 | 版本页改回 **子路径 favicon** + NPM 部署指南；新增 NAS 本机构建脚本 |
+| 2026-05-29 | 版本页 favicon 改相对路径 + `<base>`；NPM `/subapi` 补 `X-Forwarded-Prefix` |

@@ -50,6 +50,11 @@ inline std::string rewriteLocalAssetPaths(std::string html,
 constexpr const char *BASE_TAG_SCRIPT = R"html(<script>
 (function () {
     var path = window.location.pathname.replace(/\/+$/, "");
+    // NPM: /subapi 反代到后端 /version，浏览器 pathname 仍是 /subapi
+    if (path === "/subapi" || path.endsWith("/subapi")) {
+        document.write('<base href="' + path + '/version/">');
+        return;
+    }
     var routes = ["/version", "/dashboard", "/inspect"];
     for (var i = 0; i < routes.length; i++) {
         var route = routes[i];
