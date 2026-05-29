@@ -10,9 +10,33 @@ IMAGE="${IMAGE:-subconverter:nas-amd64}"
 BASE_IMAGE="${BASE_IMAGE:-subconverter-extended-build}"
 CONTAINER="${CONTAINER:-subconverter}"
 PORT="${PORT:-25500}"
-VERSION="${VERSION:-1.1.18+houjia.6}"
+VERSION="${VERSION:-1.1.18+houjia.7}"
 BUILD_SHA="${BUILD_SHA:-$(git -C "$ROOT" rev-parse --short HEAD)}"
 BUILD_DATE="${BUILD_DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
+
+PREF_SRC="$ROOT/deploy/nas/pref.toml"
+PREF_BUILD="$ROOT/deploy/nas/pref.build.toml"
+cp "$PREF_SRC" "$PREF_BUILD"
+if [[ -n "${DASHBOARD_AUTH_PASSWORD:-}" ]]; then
+  python3 - "$PREF_BUILD" <<'PY'
+import pathlib, re, sys
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+block = re.compile(
+    r"(\[statistics\.dashboard_auth\][\s\S]*?^password = ).*$",
+    re.MULTILINE,
+)
+new_text, n = block.subn(r'\1"' + __import__("os").environ["DASHBOARD_AUTH_PASSWORD"].replace("\\", "\\\\").replace('"', '\\"') + '"', text, count=1)
+if n != 1:
+    raise SystemExit("pref.build.toml: 未找到 [statistics.dashboard_auth] password 行")
+path.write_text(new_text, encoding="utf-8")
+PY
+elif grep -q '^\[statistics\.dashboard_auth\]' "$PREF_SRC" && grep -A5 '^\[statistics\.dashboard_auth\]' "$PREF_SRC" | grep -q 'enabled = true'; then
+  if grep -A8 '^\[statistics\.dashboard_auth\]' "$PREF_BUILD" | grep -q 'password = "CHANGE_ME"'; then
+    echo "ERROR: dashboard_auth 已启用但未设置 DASHBOARD_AUTH_PASSWORD" >&2
+    exit 1
+  fi
+fi
 
 echo "==> rsync source to $NAS_HOST:$REMOTE_DIR"
 ssh -o BatchMode=yes "$NAS_HOST" "mkdir -p '$REMOTE_DIR'"
