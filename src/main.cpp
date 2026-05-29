@@ -192,6 +192,8 @@ int main(int argc, char *argv[]) {
   });
   */
 
+  webServer.append_redirect("/", "/version");
+
   webServer.append_response("GET", "/version/favicon-dark.svg",
                             "image/svg+xml; charset=utf-8",
                             version_page::faviconDark);

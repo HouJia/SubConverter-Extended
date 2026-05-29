@@ -29,16 +29,19 @@ subconverter 提供订阅转换 HTTP API，默认端口 **25500**。
 
 | 端点 | 用途 |
 |------|------|
+| `GET /` | 302 重定向到 `/version` |
 | `GET /version` | Extended 版本信息页（HTML，浏览器访问） |
-| `GET /version/favicon-light.svg` | 版本页 logo / favicon（**独立 HTTP 资源**） |
+| `GET /version/favicon-light.svg` | 版本页 logo / favicon（`/inspect`、`/dashboard` 用 `../version/` 引用） |
 | `GET /version/favicon-dark.svg` | 深色主题 favicon |
 | `GET /version.txt` | 纯文本版本（**sub-web 页眉**、脚本健康检查） |
 | `GET /sub?target=...&url=...` | 转换订阅 |
-| `GET /dashboard` | Extended 统计面板（需在 pref 中启用 statistics） |
+| `GET /dashboard` | Extended **可选**统计面板；默认 **未启用**（`pref.toml` 中 `statistics.enabled = true` 后才注册路由，否则 **404**） |
+| `GET /inspect` | 订阅诊断台（HTML） |
 
 外网不直接暴露 `25500`，由 NPM 映射为：
 
-- `https://<域名>:<HTTPS端口>/subapi/version` → 容器 `/version`
+- `https://<域名>/subapi` 与 `/subapi/` → **301** 到 `/subapi/version`（规范 URL）
+- `https://<域名>/subapi/version` → 容器 `/version`
 - `https://<域名>:<HTTPS端口>/subapi/version/favicon-light.svg` → 容器 `/version/favicon-light.svg`
 - `https://<域名>:<HTTPS端口>/subapi/version.txt` → 容器 `/version.txt`
 - `https://<域名>:<HTTPS端口>/subapi/sub?...` → 容器 `/sub?...`
@@ -50,6 +53,10 @@ subconverter 提供订阅转换 HTTP API，默认端口 **25500**。
 **Custom Location 示例**（Location = `/subapi/`，Forward = `http://<NAS内网IP>:25500/`）：
 
 ```nginx
+# 规范 URL：短链跳转到版本页
+location = /subapi { return 301 $scheme://$http_host/subapi/version; }
+location = /subapi/ { return 301 $scheme://$http_host/subapi/version; }
+
 # NPM → Proxy Host → Custom Locations → /subapi/
 location ^~ /subapi/ {
     proxy_pass http://192.168.0.6:25500/;   # 末尾 / 表示剥掉 /subapi 前缀
@@ -211,7 +218,9 @@ ssh nas-qnap "curl -sI http://127.0.0.1:25500/version/favicon-light.svg | head -
 | 现象 | 说明 |
 |------|------|
 | `deploy-to-qnap.sh` 报 `docker.sock` 不存在 | 本机 Docker 未启动；改用 [§5.2](#52-方式-bnas-上构建无需本机-docker) |
-| `/subapi/version` 图标破损 | HTML 用了绝对路径 `/version/favicon-*`（不受 `<base>` 影响）；或 NPM 未配整段 `/subapi/`；见 [§1.2](#12-version-页静态资源子路径非内联) |
+| `/subapi/` 404 | 仅配了 `location = /subapi` 反代，未处理带尾斜杠；应 **301** 到 `/subapi/version` |
+| `/dashboard` 404 | 正常：NAS 默认未开 `statistics.enabled` |
+| `/inspect` 图标裂 | favicon 只在 `/version/favicon-*`；inspect 页须用 `../version/favicon-*` |
 | sub-web 页眉 HTML 乱码 | 误请求 `/version`；应使用 `/version.txt` |
 | `No nodes were found!` | API 已通；订阅 `url` 无效或拉取失败 |
 
