@@ -59,7 +59,7 @@ location = /subapi/ { return 301 $scheme://$http_host/subapi/version; }
 
 # NPM → Proxy Host → Custom Locations → /subapi/
 location ^~ /subapi/ {
-    proxy_pass http://192.168.0.6:25500/;   # 末尾 / 表示剥掉 /subapi 前缀
+    proxy_pass http://<NAS-内网IP>:25500/;   # 末尾 / 表示剥掉 /subapi 前缀
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;

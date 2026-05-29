@@ -4,7 +4,8 @@ version = 1
 api_mode = false
 
 # Access token used for performing critical action through Web interface
-api_access_token = "password"
+# 部署前请改为强随机值；勿使用默认值提交到公网实例
+api_access_token = "CHANGE_ME"
 
 # Default URLs, used when no URL is provided in request, use "|" to separate multiple subscription links, supports local files/URL
 default_url = []
