@@ -1252,7 +1252,7 @@ std::string page(Request &, Response &response) {
                 renderMap();
             }
             async function refresh() {
-                var response = await fetch("/dashboard/data?_=" + Date.now(), { cache: "no-store", headers: { "Accept": "application/json" } });
+                var response = await fetch("dashboard/data?_=" + Date.now(), { cache: "no-store", headers: { "Accept": "application/json" } });
                 render(await response.json());
             }
             document.getElementById("lang-toggle").addEventListener("click", function () {

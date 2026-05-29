@@ -948,10 +948,10 @@ std::string page(Request &request, Response &response) {
         <footer>
             <span data-lang="en">SubConverter-Extended )html" +
          std::string(VERSION) +
-         R"html( · <a href="/version">Version</a></span>
+         R"html( · <a href="../version">Version</a></span>
             <span data-lang="zh">SubConverter-Extended )html" +
          std::string(VERSION) +
-         R"html( · <a href="/version">版本信息</a></span>
+         R"html( · <a href="../version">版本信息</a></span>
         </footer>
     </main>
 
@@ -1198,23 +1198,32 @@ std::string page(Request &request, Response &response) {
                 return (value / 1024 / 1024).toFixed(1) + " MB";
             }
 
+            function subEndpointPath() {
+                var path = window.location.pathname.replace(/\/+$/, "");
+                if (path === "/inspect" || path.endsWith("/inspect")) {
+                    return path.slice(0, path.length - "/inspect".length) + "/sub";
+                }
+                return "/sub";
+            }
+
             function normalizeRequest(raw) {
                 var value = (raw || "").trim();
+                var subPath = subEndpointPath();
                 var url;
                 if (!value) {
-                    url = new URL("/sub", window.location.origin);
+                    url = new URL(subPath, window.location.origin);
                 } else if (value.charAt(0) === "?") {
-                    url = new URL("/sub" + value, window.location.origin);
+                    url = new URL(subPath + value, window.location.origin);
                 } else if (value.charAt(0) === "/") {
                     url = new URL(value, window.location.origin);
                 } else if (/^https?:\/\//i.test(value)) {
                     url = new URL(value);
                 } else {
-                    url = new URL("/sub?" + value, window.location.origin);
+                    url = new URL(subPath + "?" + value, window.location.origin);
                 }
 
-                if (url.pathname !== "/sub") {
-                    url.pathname = "/sub";
+                if (url.origin === window.location.origin) {
+                    url.pathname = subPath;
                 }
                 url.searchParams.set("explain", "true");
                 return url;
