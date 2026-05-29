@@ -6,4 +6,5 @@ base/cache
 build
 runtime/
 .playwright-mcp/
+deploy/nas/pref.build.toml
 .DS_Store

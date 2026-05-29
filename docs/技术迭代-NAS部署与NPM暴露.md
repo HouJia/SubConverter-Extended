@@ -165,7 +165,7 @@ VITE_SUBCONVERTER_DEFAULT_BACKEND=https://<你的域名>:<HTTPS端口>/subapi
 
 ```bash
 cd SubConverter-Extended   # 仓库根
-./deploy/nas/deploy-to-qnap.sh
+DASHBOARD_AUTH_PASSWORD='你的密码' ./deploy/nas/deploy-to-qnap.sh
 ```
 
 流程：① 本机 `docker buildx` 两阶段镜像 → ② `docker save | ssh nas docker load` → ③ SSH 重建容器。
@@ -191,7 +191,14 @@ cd SubConverter-Extended
 |------|------|------|
 | `NAS_HOST` | `nas-qnap` | SSH 主机名 |
 | `REMOTE_DIR` | `/share/CACHEDEV1_DATA/Containers/subconverter-build` | NAS 上的构建目录 |
-| `VERSION` | `1.1.18+houjia.1` | 写入镜像的版本字符串（主版本对齐 upstream release） |
+| `VERSION` | `1.1.18+houjia.7` | 写入镜像的版本字符串 |
+| `DASHBOARD_AUTH_PASSWORD` | （空） | 若 `dashboard_auth.enabled = true`，**必填**；注入 `pref.build.toml`，勿写入 Git |
+
+带 dashboard 密码部署示例：
+
+```bash
+DASHBOARD_AUTH_PASSWORD='你的密码' ./deploy/nas/deploy-to-qnap.sh
+```
 
 ### 5.3 升级后自检
 
@@ -230,7 +237,7 @@ ssh nas-qnap "curl -sI http://127.0.0.1:25500/version/favicon-light.svg | head -
 |------|------|
 | SubConverter-Extended | **`hjsmaster`** |
 | sub-web | **`hjsmaster`** |
-| nginx-proxy-manager | `feature/nas-qnap-phase1-proxy`（或你的 NPM 配置分支） |
+| nginx-proxy-manager | **`hjsmaster`** |
 
 ## 10. 变更记录
 
@@ -239,3 +246,4 @@ ssh nas-qnap "curl -sI http://127.0.0.1:25500/version/favicon-light.svg | head -
 | 2026-05-16 | 初版：NAS + NPM `/subapi` |
 | 2026-05-28 | Extended 基线、两阶段 Docker、`/version.txt` |
 | 2026-05-29 | 启用 NAS `statistics`；新增 [功能与访问入口.md](功能与访问入口.md) |
+| 2026-05-29 | dashboard_auth 公网保护；`api_access_token` 历史字段说明；NPM 分支统一 `hjsmaster` |

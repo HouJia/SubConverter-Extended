@@ -3,9 +3,10 @@ version = 1
 # API mode, set to true to prevent loading local subscriptions or serving local files directly
 api_mode = false
 
-# Access token used for performing critical action through Web interface
-# 部署前请改为强随机值；勿使用默认值提交到公网实例
-api_access_token = "CHANGE_ME"
+# [历史字段] 上游 subconverter pref 曾有 api_access_token（Web/API 敏感操作访问令牌）。
+# SubConverter-Extended 已移除 token 鉴权（见 settings.h：token authentication is disabled），
+# 镜像内无需配置；勿误以为改此项会影响 /dashboard 或 /sub 访问。
+# api_access_token = "..."
 
 # Default URLs, used when no URL is provided in request, use "|" to separate multiple subscription links, supports local files/URL
 default_url = []
@@ -318,7 +319,7 @@ uri = "/test"
 target = "/render?path=templates/test.tpl"
 
 [statistics]
-# 运行时统计与 /dashboard；内网默认开启、无密码（公网暴露时请开 dashboard_auth）
+# 运行时统计与 /dashboard
 enabled = true
 data_dir = "stats"
 flush_interval = 5
@@ -328,10 +329,11 @@ provider = "header"
 country_headers = ["CF-IPCountry", "X-Geo-Country", "X-Vercel-IP-Country", "CloudFront-Viewer-Country"]
 
 [statistics.dashboard_auth]
-# false = 直接打开 /dashboard；true = HTTP Basic（同官方 demo）
-enabled = false
-username = ""
-password = ""
+# true = HTTP Basic；公网 /subapi/dashboard 须开启
+enabled = true
+username = "io8oi"
+# 勿将真实密码提交 Git；部署前用环境变量 DASHBOARD_AUTH_PASSWORD 注入（见 deploy-to-qnap.sh）
+password = "CHANGE_ME"
 max_failures = 5
 window_seconds = 300
 lock_seconds = 900

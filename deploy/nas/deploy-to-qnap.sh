@@ -19,9 +19,33 @@ CONTAINER="${CONTAINER:-subconverter}"
 PORT="${PORT:-25500}"
 # 上游 Aethersailor release 见 https://github.com/Aethersailor/SubConverter-Extended/releases（当前 v1.1.18）。
 # HouJia fork：`<上游版本>+houjia.N`（SemVer 构建元数据）；merge 到新 upstream release 时 bump 主版本并重置或递增 N。
-VERSION="${VERSION:-1.1.18+houjia.6}"
+VERSION="${VERSION:-1.1.18+houjia.7}"
 BUILD_SHA="${BUILD_SHA:-$(git rev-parse --short HEAD)}"
 BUILD_DATE="${BUILD_DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
+
+PREF_SRC="$ROOT/deploy/nas/pref.toml"
+PREF_BUILD="$ROOT/deploy/nas/pref.build.toml"
+cp "$PREF_SRC" "$PREF_BUILD"
+if [[ -n "${DASHBOARD_AUTH_PASSWORD:-}" ]]; then
+  python3 - "$PREF_BUILD" <<'PY'
+import pathlib, re, sys
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+block = re.compile(
+    r"(\[statistics\.dashboard_auth\][\s\S]*?^password = ).*$",
+    re.MULTILINE,
+)
+new_text, n = block.subn(r'\1"' + __import__("os").environ["DASHBOARD_AUTH_PASSWORD"].replace("\\", "\\\\").replace('"', '\\"') + '"', text, count=1)
+if n != 1:
+    raise SystemExit("pref.build.toml: 未找到 [statistics.dashboard_auth] password 行")
+path.write_text(new_text, encoding="utf-8")
+PY
+elif grep -q '^\[statistics\.dashboard_auth\]' "$PREF_SRC" && grep -A5 '^\[statistics\.dashboard_auth\]' "$PREF_SRC" | grep -q 'enabled = true'; then
+  if grep -A8 '^\[statistics\.dashboard_auth\]' "$PREF_BUILD" | grep -q 'password = "CHANGE_ME"'; then
+    echo "ERROR: dashboard_auth 已启用但未设置 DASHBOARD_AUTH_PASSWORD" >&2
+    exit 1
+  fi
+fi
 
 cd "$ROOT"
 echo "==> stage1: Extended build $BASE_IMAGE (linux/amd64) version=$VERSION"
