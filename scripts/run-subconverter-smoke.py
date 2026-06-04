@@ -149,6 +149,32 @@ def run_checks(base_url: str, timeout: int, snapshot_dir: Path | None, update: b
         raise AssertionError("provider explain report did not enter proxy-provider mode")
     if provider_report.get("output", {}).get("provider_count") != 1:
         raise AssertionError("provider explain report did not count one provider")
+
+    flat_explain = fetch(
+        base_url,
+        "/sub",
+        {
+            "target": "clash",
+            "url": "https://example.com/sub",
+            "config": DISABLE_RULEGEN_CONFIG,
+            "list": "true",
+            "explain": "true",
+        },
+        timeout,
+    )
+    flat_report = json.loads(flat_explain)
+    if flat_report.get("mode", {}).get("proxy_provider"):
+        raise AssertionError("list=true explain report should not use proxy-provider mode")
+    if flat_report.get("mode", {}).get("nodelist"):
+        raise AssertionError("Clash list=true should keep template (nodelist=false)")
+    flat_params = flat_report.get("parameters", {})
+    flat_recognized = {
+        item.get("name"): item for item in flat_params.get("recognized", [])
+    }
+    list_param = flat_recognized.get("list", {})
+    if list_param.get("status") != "applied" or list_param.get("effective_value") != "true":
+        raise AssertionError("list=true was not applied in explain report")
+
     provider_params = provider_report.get("parameters", {})
     provider_recognized = {
         item.get("name"): item for item in provider_params.get("recognized", [])

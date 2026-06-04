@@ -184,6 +184,8 @@ proxy-providers:
 > * 使用 `proxy-provider` 后，订阅由客户端内核以**直连**方式自行拉取
 > * 订阅是否可访问，**与本后端无关，与规则无关**；效果等同于你手动编写 YAML 并填入订阅链接
 > * 如内核使用 `proxy-provider` 拉取订阅失败，通常意味着订阅链接本身无效，或当前网络环境下无法直连访问该订阅地址，请与远程订阅服务商客服对线
+> * 需要**平铺 `proxies` 列表**（例如手工改 `server` / `port`）时，在 Clash 请求中加 **`list=true`**：会拉取订阅并写入 `proxies`，**仍合并外部模板与规则**；未传 `list` 时仍为默认 `proxy-provider` 模式
+> * 拉取远程订阅时，未指定 `ua=` 会按 **`ClashMeta` → `Clash/1.0` → `mihomo` → `clash.meta`** 依次尝试；也可用 `ua=` 固定某一种
 
 > [!TIP]
 > **优势：**
@@ -612,7 +614,7 @@ http://localhost:25500/inspect
 这个页面适合排查以下问题：
 
 * 某个请求参数是否被识别、是否生效、是否被覆盖或抑制
-* `list=true` 等参数是否被项目强制改写为 `proxy-provider` 模式
+* `list=true` 是否生效（应进入平铺 `proxies` 模式；未传 `list` 时仍为默认 `proxy-provider`）
 * `include` / `exclude`、`emoji`、`new_name`、`config` 等外部参数最终是否参与转换
 * 外部配置、规则集、自定义组、Provider 是否按预期加载或生成
 

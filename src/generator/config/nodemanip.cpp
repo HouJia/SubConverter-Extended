@@ -35,6 +35,65 @@ void copyNodes(std::vector<Proxy> &source, std::vector<Proxy> &dest) {
   std::move(source.begin(), source.end(), std::back_inserter(dest));
 }
 
+static const string_array kSubscriptionFetchUAs = {"ClashMeta", "Clash/1.0",
+                                                   "mihomo", "clash.meta"};
+
+static bool looksLikeFailedSubscriptionBody(const std::string &body) {
+  if (body.empty() || body.size() < 128)
+    return true;
+  if (startsWith(body, "Too Many Requests") || startsWith(body, "Bad Request"))
+    return true;
+  if (body.find("当前客户端已淘汰") != std::string::npos ||
+      body.find("update-required") != std::string::npos)
+    return true;
+  if (body.find("proxies:") == std::string::npos &&
+      body.find("vmess://") == std::string::npos &&
+      body.find("vless://") == std::string::npos &&
+      body.find("trojan://") == std::string::npos &&
+      body.find("ss://") == std::string::npos &&
+      body.size() < 2048)
+    return true;
+  return false;
+}
+
+static std::string
+fetchSubscriptionContent(const std::string &link, const std::string &proxy,
+                         unsigned int cache_ttl, std::string *response_headers,
+                         string_icase_map *request_headers,
+                         FetchContext fetch_context,
+                         const std::string *custom_user_agent) {
+  string_icase_map fetch_headers;
+  if (request_headers)
+    fetch_headers = *request_headers;
+
+  string_array ua_candidates;
+  if (custom_user_agent && !custom_user_agent->empty())
+    ua_candidates = {*custom_user_agent};
+  else
+    ua_candidates = kSubscriptionFetchUAs;
+
+  std::string last_body;
+  for (const std::string &ua : ua_candidates) {
+    fetch_headers["User-Agent"] = ua;
+    std::string extra_headers;
+    std::string body =
+        webGet(link, proxy, cache_ttl, &extra_headers, &fetch_headers,
+               fetch_context);
+    if (response_headers && !extra_headers.empty())
+      *response_headers = extra_headers;
+    last_body = body;
+    if (!looksLikeFailedSubscriptionBody(body)) {
+      if (ua_candidates.size() > 1)
+        writeLog(LOG_TYPE_INFO, "订阅拉取成功，使用 User-Agent：" + ua);
+      return body;
+    }
+    if (ua_candidates.size() > 1)
+      writeLog(LOG_TYPE_WARN, "订阅拉取失败，尝试下一个 User-Agent（当前："
+                                     + ua + "）。");
+  }
+  return last_body;
+}
+
 static bool isBrowserUA(const std::string &ua) {
   static const std::vector<std::string> browser_keywords = {
       "Mozilla/",        "AppleWebKit/", "Chrome/",
@@ -242,12 +301,15 @@ int addNodes(std::string link, std::vector<Proxy> &allNodes, int groupID,
       }
     }
 
-    // 处理订阅链接：跳过下载，交给 proxy-provider
-    if (isSubscription) {
+    // proxy-provider 模式：跳过下载；list=true 时继续走下方 webGet
+    if (isSubscription && !parse_set.fetch_subscription_nodes) {
       writeLog(LOG_TYPE_INFO, "检测到订阅 URL，跳过下载（将作为 "
                               "proxy-provider 使用）：" +
                                   link);
-      return 0; // 返回成功，让后续逻辑将其写入 proxy-provider
+      return 0;
+    }
+    if (isSubscription && parse_set.fetch_subscription_nodes) {
+      writeLog(LOG_TYPE_INFO, "list 模式：正在下载订阅 URL：" + link);
     }
 
     // 节点链接：直接用 mihomo 解析（不需要 webGet）
@@ -260,26 +322,38 @@ int addNodes(std::string link, std::vector<Proxy> &allNodes, int groupID,
       if (startsWith(link, "surge:///install-config")) // surge config link
         link = urlDecode(getUrlArg(link, "url"));
 
-      // UA: ?ua= 优先；否则将浏览器 UA 替换为 clash.meta
-      string_icase_map fetch_headers;
-      string_icase_map *hdr = request_headers;
-      if (request_headers)
-        fetch_headers = *request_headers;
-      if (parse_set.custom_user_agent && !parse_set.custom_user_agent->empty()) {
-        fetch_headers["User-Agent"] = *parse_set.custom_user_agent;
-        hdr = &fetch_headers;
-      } else if (request_headers) {
-        auto ua_it = fetch_headers.find("User-Agent");
-        if (ua_it != fetch_headers.end() && isBrowserUA(ua_it->second)) {
-          writeLog(LOG_TYPE_INFO, "检测到浏览器 UA，已替换为 clash.meta UA "
-                                  "以避免被拦截");
-          ua_it->second = "clash.meta";
+      if (parse_set.fetch_subscription_nodes) {
+        writeLog(LOG_TYPE_INFO,
+                 parse_set.custom_user_agent &&
+                         !parse_set.custom_user_agent->empty()
+                     ? "list 模式拉取订阅，使用请求指定的 User-Agent。"
+                     : "list 模式拉取订阅，按 ClashMeta → Clash/1.0 → mihomo → "
+                       "clash.meta 依次尝试。");
+        strSub = fetchSubscriptionContent(
+            link, proxy, global.cacheSubscription, &extra_headers,
+            request_headers, parse_set.fetch_context,
+            parse_set.custom_user_agent);
+      } else {
+        string_icase_map fetch_headers;
+        string_icase_map *hdr = request_headers;
+        if (request_headers)
+          fetch_headers = *request_headers;
+        if (parse_set.custom_user_agent &&
+            !parse_set.custom_user_agent->empty()) {
+          fetch_headers["User-Agent"] = *parse_set.custom_user_agent;
           hdr = &fetch_headers;
+        } else if (request_headers) {
+          auto ua_it = fetch_headers.find("User-Agent");
+          if (ua_it != fetch_headers.end() && isBrowserUA(ua_it->second)) {
+            writeLog(LOG_TYPE_INFO,
+                     "检测到浏览器 UA，已替换为 ClashMeta UA 以避免被拦截");
+            ua_it->second = "ClashMeta";
+            hdr = &fetch_headers;
+          }
         }
+        strSub = webGet(link, proxy, global.cacheSubscription, &extra_headers,
+                        hdr, parse_set.fetch_context);
       }
-
-      strSub = webGet(link, proxy, global.cacheSubscription, &extra_headers, hdr,
-                      parse_set.fetch_context);
     }
     /*
     if(strSub.size() == 0)

@@ -24,6 +24,8 @@ struct parse_settings
     RegexMatchConfigs *time_rules = nullptr;
     std::string *sub_info = nullptr;
     bool authorized = false;
+    /// list=true：拉取 HTTP(S) 订阅并平铺节点；false：订阅留给 proxy-provider
+    bool fetch_subscription_nodes = false;
     FetchContext fetch_context = FetchContext::TrustedConfig;
     string_icase_map *request_header = nullptr;
     std::string *custom_user_agent = nullptr;

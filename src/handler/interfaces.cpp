@@ -1425,10 +1425,20 @@ static std::string subconverter_impl(Request &request, Response &response,
     ext.clash_script = false;
   explain.expand_rulesets = argExpandRulesets.get(false);
 
-  ext.nodelist = argGenNodeList;
-  // 强制 list=false，直接覆盖用户提供的任何值
-  // 确保始终使用 proxy-provider 模式，而不是读取订阅并形成节点列表
-  ext.nodelist = false;
+  // list=true：Clash 下平铺 proxies 且保留模板；其他 target 仍为纯节点列表
+  const bool list_expand_proxies = isTruthyRequestValue(getUrlArg(argument, "list"));
+  const bool clash_flat_proxies =
+      list_expand_proxies &&
+      (argTarget == "clash" || argTarget == "clashr");
+  if (clash_flat_proxies) {
+    ext.nodelist = false;
+    ext.use_proxy_provider = false;
+  } else if (list_expand_proxies) {
+    ext.nodelist = true;
+    ext.use_proxy_provider = false;
+  } else {
+    ext.nodelist = false;
+  }
   explain.nodelist = ext.nodelist;
   ext.surge_ssr_path = global.surgeSSRPath;
   ext.quanx_dev_id = !argDeviceID.empty() ? argDeviceID : global.quanXDevID;
@@ -1697,6 +1707,7 @@ static std::string subconverter_impl(Request &request, Response &response,
   parse_set.fetch_context = FetchContext::TrustedConfig;
   parse_set.js_runtime = ext.js_runtime;
   parse_set.js_context = ext.js_context;
+  parse_set.fetch_subscription_nodes = clash_flat_proxies;
 
   if (!global.insertUrls.empty() && argEnableInsert) {
     groupID = -1;
@@ -1732,7 +1743,8 @@ static std::string subconverter_impl(Request &request, Response &response,
   groupID = 0;
 
   //  对于 Clash，区分节点链接和订阅链接
-  if ((argTarget == "clash" || argTarget == "clashr") && !ext.nodelist) {
+  if ((argTarget == "clash" || argTarget == "clashr") && !ext.nodelist &&
+      ext.use_proxy_provider) {
     // 先区分节点链接和订阅链接
     struct SubscriptionLinkItem {
       std::string url;
@@ -2412,12 +2424,15 @@ static std::string subconverter_impl(Request &request, Response &response,
     addSwitchParameter("append_type", ext.append_proxy_type, argAppendType);
     addSwitchParameter("tfo", ext.tfo.get(false), ext.tfo);
     addSwitchParameter("udp", ext.udp.get(false), ext.udp);
-    addParameter("list", boolString(ext.nodelist),
-                 isTruthyRequestValue(rawArg("list")) && !ext.nodelist
-                     ? "overridden"
-                     : "applied",
-                 "This project forces provider mode for Clash-compatible "
-                 "output.");
+    addParameter("list", boolString(list_expand_proxies),
+                 isTruthyRequestValue(rawArg("list")) ? "applied" : "ignored",
+                 clash_flat_proxies
+                     ? "Clash: fetch subscription, flat proxies, keep template "
+                       "and rules."
+                     : (ext.nodelist
+                            ? "Non-Clash: node list only."
+                            : "Default: proxy-provider for HTTP(S) subscription "
+                              "URLs."));
     addSwitchParameter("sort", ext.sort_flag, argSort);
     addParameter("sort_script",
                  argUseSortScript ? "enabled" : "disabled",

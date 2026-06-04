@@ -191,7 +191,7 @@ cd SubConverter-Extended
 |------|------|------|
 | `NAS_HOST` | `nas-qnap` | SSH 主机名 |
 | `REMOTE_DIR` | `/share/CACHEDEV1_DATA/Containers/subconverter-build` | NAS 上的构建目录 |
-| `VERSION` | `1.1.18+houjia.7` | 写入镜像的版本字符串 |
+| `VERSION` | `1.1.18+houjia.N`（与 `src/version.h`、部署脚本默认一致；当前 `+houjia.12`） | 写入镜像的版本字符串 |
 | `DASHBOARD_AUTH_PASSWORD` | （空） | 若 `dashboard_auth.enabled = true`，**必填**；注入 `pref.build.toml`，勿写入 Git |
 
 带 dashboard 密码部署示例：

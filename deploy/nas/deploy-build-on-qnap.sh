@@ -10,7 +10,7 @@ IMAGE="${IMAGE:-subconverter:nas-amd64}"
 BASE_IMAGE="${BASE_IMAGE:-subconverter-extended-build}"
 CONTAINER="${CONTAINER:-subconverter}"
 PORT="${PORT:-25500}"
-VERSION="${VERSION:-1.1.18+houjia.7}"
+VERSION="${VERSION:-1.1.18+houjia.12}"
 BUILD_SHA="${BUILD_SHA:-$(git -C "$ROOT" rev-parse --short HEAD)}"
 BUILD_DATE="${BUILD_DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
 
@@ -58,7 +58,9 @@ ssh -o BatchMode=yes "$NAS_HOST" "cd '$REMOTE_DIR' && \
 echo "==> recreate container $CONTAINER"
 ssh -o BatchMode=yes "$NAS_HOST" "$DOCKER_REMOTE stop $CONTAINER 2>/dev/null || true; \
   $DOCKER_REMOTE rm $CONTAINER 2>/dev/null || true; \
-  $DOCKER_REMOTE run -d --name $CONTAINER --restart always -p ${PORT}:${PORT} $IMAGE"
+  $DOCKER_REMOTE run -d --name $CONTAINER --restart always \
+    --dns 223.5.5.5 --dns 119.29.29.29 \
+    -p ${PORT}:${PORT} $IMAGE"
 
 echo "==> verify"
 sleep 3
