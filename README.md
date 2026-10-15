@@ -7,6 +7,8 @@
 
 # SubConverter-Extended
 
+> 2026-10-15 分支改名：`hjsmaster` → `hubery/main`，`hjs-feature` → `hubery/dev`，本文已同步替换。上游分支只读；本仓库不保留自己的 main/master。
+
 **A Modern Evolution of subconverter**
 
 ![GitHub Tag](https://img.shields.io/github/v/tag/Aethersailor/SubConverter-Extended?style=flat&logo=github&label=version&color=blue)
@@ -18,13 +20,13 @@
 
 > [!IMPORTANT]
 > **HouJia 交付仓（本 fork）**  
-> - **默认分支**：`hjsmaster`（NAS 构建与集成）  
-> - **自建开发**：`hjs-feature`（HouJia 增强 → merge 进 `hjsmaster`）  
+> - **默认分支**：`hubery/main`（NAS 构建与集成）  
+> - **自建开发**：`hubery/dev`（HouJia 增强 → merge 进 `hubery/main`）  
 > - **版本号**：`1.1.18+houjia.N`（对齐 [Aethersailor release](https://github.com/Aethersailor/SubConverter-Extended/releases)；`+houjia` 为 HouJia 构建元数据）  
 > - **分支模型**：[docs/技术方案-分支与上游同步.md](docs/技术方案-分支与上游同步.md)  
 > **NAS 部署**：[docs/技术迭代-NAS部署与NPM暴露.md](docs/技术迭代-NAS部署与NPM暴露.md)  
 > - **功能与访问**：[docs/功能与访问入口.md](docs/功能与访问入口.md)  
-> - **配套前端**：[HouJia/sub-web](https://github.com/HouJia/sub-web)（`hjsmaster`）  
+> - **配套前端**：[HouJia/sub-web](https://github.com/HouJia/sub-web)（`hubery/main`）  
 > 原 [HouJia/subconverter](https://github.com/HouJia/subconverter) 已归档，请在本仓库迭代。
 
 ### HouJia 相对 Extended 的增量（摘要）
@@ -36,7 +38,7 @@
 | NPM | `/version.txt`、HTML `/version` **子路径 favicon**（`/subapi/version/favicon-*.svg`）+ `page_assets` 前缀改写 |
 | 备份 | 旧 tindy 集成主线见分支 `hjsmaster-blk` |
 
-下文主体说明仍基于 **SubConverter-Extended** 功能；若与上表冲突，以 **`hjsmaster` 代码与 `docs/`** 为准。
+下文主体说明仍基于 **SubConverter-Extended** 功能；若与上表冲突，以 **`hubery/main` 代码与 `docs/`** 为准。
 
 <p align="center">
   <a href="#-项目简介">项目简介</a> •

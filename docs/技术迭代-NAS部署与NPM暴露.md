@@ -1,7 +1,9 @@
 # 技术迭代：subconverter — NAS 部署与 NPM `/subapi` 暴露
 
+> 2026-10-15 分支改名：`hjsmaster` → `hubery/main`，`hjs-feature` → `hubery/dev`，本文已同步替换。上游分支只读；本仓库不保留自己的 main/master。
+
 > **本仓库职责**：subconverter 服务在 NAS 上监听、Docker 运行、API 路径约定。  
-> **基线（2026-05-28）**：`hjsmaster` 基于 **SubConverter-Extended**（含 mihomo bridge、HTML `/version` 页等）。  
+> **基线（2026-05-28）**：`hubery/main` 基于 **SubConverter-Extended**（含 mihomo bridge、HTML `/version` 页等）。  
 > **反代配置**：见 `nginx-proxy-manager` 仓库 `scripts/nas-qnap-npm-phase1-final.mjs`。  
 > **前端**：见 `sub-web` 仓库（`DEFAULT_BACKEND` 指向 `/subapi/sub?`）。  
 > **版本**：2026-05-28
@@ -235,9 +237,9 @@ ssh nas-qnap "curl -sI http://127.0.0.1:25500/version/favicon-light.svg | head -
 
 | 项目 | 分支 |
 |------|------|
-| SubConverter-Extended | **`hjsmaster`** |
-| sub-web | **`hjsmaster`** |
-| nginx-proxy-manager | **`hjsmaster`** |
+| SubConverter-Extended | **`hubery/main`** |
+| sub-web | **`hubery/main`** |
+| nginx-proxy-manager | **`hubery/main`** |
 
 ## 10. 变更记录
 
@@ -246,4 +248,4 @@ ssh nas-qnap "curl -sI http://127.0.0.1:25500/version/favicon-light.svg | head -
 | 2026-05-16 | 初版：NAS + NPM `/subapi` |
 | 2026-05-28 | Extended 基线、两阶段 Docker、`/version.txt` |
 | 2026-05-29 | 启用 NAS `statistics`；新增 [功能与访问入口.md](功能与访问入口.md) |
-| 2026-05-29 | dashboard_auth 公网保护；`api_access_token` 历史字段说明；NPM 分支统一 `hjsmaster` |
+| 2026-05-29 | dashboard_auth 公网保护；`api_access_token` 历史字段说明；NPM 分支统一 `hubery/main` |
