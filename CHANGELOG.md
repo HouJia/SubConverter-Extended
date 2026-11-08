@@ -19,6 +19,7 @@ updated: 2026-10-27 09:29:51 CST (UTC+8)
 |---|---|
 | 2026-10-27 09:29:51 CST (UTC+8) | 更新 NAS 内置模板及可重建源：两份 INI 与生成物一致；保存现网 DNS/sniffer all_base.tpl，并让两种 Dockerfile 均显式复制基础模板及双文件名。运行镜像为 linux/amd64，保留回滚标签。 |
 | 2026-11-08 23:06:46 CST (UTC+8) | NAS 内置模板同步新规则：境外 AI 分组新增 Claude Code 遥测域名；公开仓库副本不含节点入口 IP（该规则只在威联通现网模板里，由分流套件的本机私有覆写注入）。重建镜像后须用分流套件生成的模板覆盖容器内两份内置 INI。 |
+| 2026-11-08 23:22:06 CST (UTC+8) | 内置模板合并为单一文件名 `houjia.local-template.ini`：默认配置 `default_external_config` 改指向它，两份 Dockerfile 只复制这一份，不再保留 `houjia-template.ini`。依据：NAS 日志显示所有在用订阅（Verge、旁路由 OpenClash）都显式使用它，没有请求使用旧名。 |
 
 ## 验证
 

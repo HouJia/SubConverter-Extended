@@ -3,7 +3,6 @@
 ARG BASE_IMAGE=subconverter-extended-build
 FROM ${BASE_IMAGE}
 COPY deploy/nas/pref.build.toml /base/pref.toml
-COPY deploy/nas/config-template.ini /base/config/houjia-template.ini
 COPY deploy/nas/config-template.ini /base/config/houjia.local-template.ini
 COPY deploy/nas/all_base.tpl /base/base/all_base.tpl
 WORKDIR /base

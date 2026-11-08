@@ -39,7 +39,7 @@ enable_filter = false
 #'''
 
 # 默认外部配置（镜像内文件；勿用 GitHub raw，NAS 上易超时导致 config 不生效）
-default_external_config = "config/houjia-template.ini"
+default_external_config = "config/houjia.local-template.ini"
 
 # The file scope limit of the 'rule_base' options in external configs.
 base_path = "base"

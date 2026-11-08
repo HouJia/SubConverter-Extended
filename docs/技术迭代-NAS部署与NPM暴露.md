@@ -152,7 +152,7 @@ VITE_SUBCONVERTER_DEFAULT_BACKEND=https://<你的域名>:<HTTPS端口>/subapi
 | 项 | 说明 |
 |----|------|
 | 根 `Dockerfile` | Extended 多阶段构建（Go mihomo bridge + C++） |
-| `deploy/nas/Dockerfile` | 薄 overlay：`pref.toml`、`houjia-template.ini` |
+| `deploy/nas/Dockerfile` | 薄 overlay：`pref.toml`、`houjia.local-template.ini` |
 | `deploy/nas/deploy-to-qnap.sh` | **方式 A**：本机 Docker 构建 → save/load → NAS |
 | `deploy/nas/deploy-build-on-qnap.sh` | **方式 B**：rsync 源码到 NAS，在 NAS 上 docker build |
 | `src/handler/page_assets.h` | NPM 子路径：`X-Forwarded-Prefix` + HTML 资源路径改写 |
