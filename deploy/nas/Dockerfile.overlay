@@ -3,3 +3,5 @@
 FROM tindy2013/subconverter:latest
 COPY deploy/nas/pref.toml /base/pref.toml
 COPY deploy/nas/config-template.ini /base/config/houjia-template.ini
+COPY deploy/nas/config-template.ini /base/config/houjia.local-template.ini
+COPY deploy/nas/all_base.tpl /base/base/all_base.tpl
